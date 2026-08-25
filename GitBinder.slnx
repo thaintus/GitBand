@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GitBinder.Application/GitBinder.Application.csproj" />
+    <Project Path="src/GitBinder.CredentialHelper/GitBinder.CredentialHelper.csproj" />
+    <Project Path="src/GitBinder.Desktop/GitBinder.Desktop.csproj" />
+    <Project Path="src/GitBinder.Domain/GitBinder.Domain.csproj" />
+    <Project Path="src/GitBinder.Infrastructure/GitBinder.Infrastructure.csproj" />
+    <Project Path="src/GitBinder.Platform/GitBinder.Platform.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GitBinder.Tests/GitBinder.Tests.csproj" />
+  </Folder>
+</Solution>

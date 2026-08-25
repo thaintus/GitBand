@@ -1,0 +1,67 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitBinder.Desktop.ViewModels"
+             xmlns:loc="using:GitBinder.Desktop.Localization"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="GitBinder.Desktop.Views.AccountsView"
+             x:DataType="vm:AccountsViewModel">
+
+    <Grid Margin="32,28" RowDefinitions="Auto,*,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+            <StackPanel Spacing="5">
+                <TextBlock FontSize="28" FontWeight="Bold" Text="{loc:Loc Nav.Accounts}" />
+                <TextBlock FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Accounts.Description}" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="{loc:Loc Accounts.New}" Command="{Binding AddCommand}" Classes="primary" VerticalAlignment="Center" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12">
+                <ItemsControl ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                    CornerRadius="14" Padding="0">
+                                <Grid>
+                                    <Grid Margin="20" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                                        <Border Width="42" Height="42" CornerRadius="12" Background="#EAF1FF" VerticalAlignment="Top">
+                                            <TextBlock Text="●" Foreground="#2563EB" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Spacing="6">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding DisplayAlias}" />
+                                                <Border Background="#FFF7E6" CornerRadius="8" Padding="7,2" IsVisible="{Binding IsDefault}">
+                                                    <TextBlock Text="{loc:Loc Accounts.Default}" FontSize="11" FontWeight="SemiBold" Foreground="#B45309" />
+                                                </Border>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Border Background="{DynamicResource SurfaceMutedBrush}" CornerRadius="7" Padding="8,3">
+                                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding PlatformText}" />
+                                                </Border>
+                                                <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding EmailText}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Margin="0,0,30,0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                            <Button Content="{loc:Loc Accounts.SetDefault}" Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).SetDefaultCommand}"
+                                                    CommandParameter="{Binding}" Classes="ghost" />
+                                            <Button Content="{loc:Loc Accounts.Edit}" Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).EditCommand}"
+                                                    CommandParameter="{Binding}" Classes="ghost" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Button Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Content="×"
+                                            ToolTip.Tip="{loc:Loc Accounts.Delete}"
+                                            Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).DeleteCommand}"
+                                            CommandParameter="{Binding}" Classes="icon-danger" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+        <TextBlock Grid.Row="2" Margin="0,12,0,0" Text="{Binding Feedback}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" />
+    </Grid>
+</UserControl>

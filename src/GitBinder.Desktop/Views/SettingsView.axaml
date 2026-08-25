@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitBinder.Desktop.ViewModels"
+             xmlns:loc="using:GitBinder.Desktop.Localization"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="GitBinder.Desktop.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="32,28" Spacing="16" MaxWidth="820">
+            <StackPanel Spacing="5" Margin="0,0,0,6">
+                <TextBlock FontSize="28" FontWeight="Bold" Text="{loc:Loc Nav.Settings}" />
+                <TextBlock FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Settings.Description}" />
+            </StackPanel>
+
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                    <Border Width="40" Height="40" CornerRadius="12" Background="#EAF1FF">
+                        <TextBlock Text="文" FontSize="16" FontWeight="Bold" Foreground="#1D4ED8" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="{loc:Loc Settings.LanguageLabel}" />
+                        <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Settings.LanguageDesc}" />
+                    </StackPanel>
+                    <ComboBox Grid.Column="2" Width="190" VerticalAlignment="Center"
+                              ItemsSource="{Binding Languages}"
+                              SelectedItem="{Binding SelectedLanguage}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </Border>
+
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
+                    <Border Width="40" Height="40" CornerRadius="12" Background="#F3E8FF">
+                        <TextBlock Text="◉" FontSize="18" FontWeight="Bold" Foreground="#7E22CE" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="{loc:Loc Settings.Tray}" />
+                        <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Settings.CloseToTrayDesc}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
+                                  IsChecked="{Binding CloseToTrayOnClose}" />
+                </Grid>
+            </Border>
+
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="9" Background="#ECFDF5">
+                            <TextBlock Text="⌘" Foreground="#059669" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Text="{loc:Loc Settings.Git}" />
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <TextBlock Grid.Row="0" Grid.Column="0" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Text="{loc:Loc Settings.RealGit}" />
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding RealGitPath}" IsReadOnly="True" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Text="{loc:Loc Settings.SshExecutable}" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding SshExecutable}" IsReadOnly="True" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                <StackPanel Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Border Width="32" Height="32" CornerRadius="9" Background="#FFF7E6">
+                            <TextBlock Text="▣" Foreground="#B45309" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Text="{loc:Loc Settings.Storage}" />
+                    </StackPanel>
+
+                    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" RowSpacing="8">
+                        <TextBlock Grid.Row="0" Grid.Column="0" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Text="{loc:Loc Settings.Database}" />
+                        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding DatabasePath}" IsReadOnly="True" />
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Text="{loc:Loc Settings.DataDirectory}" />
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding DataDirectory}" IsReadOnly="True" />
+                    </Grid>
+
+                    <Button Content="{loc:Loc Settings.Detect}" Command="{Binding DetectCommand}" HorizontalAlignment="Left" Classes="ghost" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

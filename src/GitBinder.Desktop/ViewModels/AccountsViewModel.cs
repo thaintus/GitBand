@@ -1,0 +1,203 @@
+using System.Collections.ObjectModel;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using GitBinder.Application.Accounts;
+using GitBinder.Application.Common;
+using GitBinder.Desktop.Views;
+using GitBinder.Domain.Accounts;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace GitBinder.Desktop.ViewModels;
+
+/// <summary>
+/// 账号页 ViewModel。
+/// </summary>
+public partial class AccountsViewModel : ViewModelBase
+{
+    private readonly IAccountRepository _repository;
+    private readonly AccountService _accountService;
+    private readonly ILocalizationService _localization;
+    private readonly IServiceProvider _services;
+
+    public ObservableCollection<AccountItemViewModel> Items { get; } = [];
+
+    [ObservableProperty]
+    private bool _hasItems;
+
+    [ObservableProperty]
+    private AccountItemViewModel? _selectedItem;
+
+    [ObservableProperty]
+    private string _feedback = string.Empty;
+
+    public AccountsViewModel(
+        IAccountRepository repository,
+        AccountService accountService,
+        ILocalizationService localization,
+        IServiceProvider services)
+    {
+        _repository = repository;
+        _accountService = accountService;
+        _localization = localization;
+        _services = services;
+    }
+
+    public async Task LoadAsync()
+    {
+        var accounts = await _repository.GetAllAsync();
+        Items.Clear();
+        foreach (var account in accounts)
+        {
+            Items.Add(new AccountItemViewModel(account, _localization));
+        }
+
+        HasItems = Items.Count > 0;
+    }
+
+    public async Task<Account?> FindByIdAsync(Guid id)
+        => await _repository.GetByIdAsync(id);
+
+    [RelayCommand]
+    private async Task AddAsync()
+    {
+        Feedback = string.Empty;
+        await OpenEditorAsync(null);
+    }
+
+    [RelayCommand]
+    private async Task EditAsync(AccountItemViewModel? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        Feedback = string.Empty;
+        await OpenEditorAsync(item.Account);
+    }
+
+    private async Task OpenEditorAsync(Account? account)
+    {
+        try
+        {
+            var editor = _services.GetRequiredService<AccountEditViewModel>();
+            await editor.LoadPlatformsAsync();
+            if (account is null)
+            {
+                editor.InitializeForCreate();
+            }
+            else
+            {
+                editor.InitializeForEdit(account);
+            }
+
+            var window = new AccountEditWindow(editor);
+            var owner = GetParentWindow();
+            var result = owner is null
+                ? await window.ShowDialog<bool?>(window)
+                : await window.ShowDialog<bool?>(owner);
+            if (result is true)
+            {
+                await LoadAsync();
+            }
+        }
+        catch (Exception)
+        {
+            // 编辑器打开失败时留在列表页提示，避免 AsyncRelayCommand 未处理异常直接终止桌面程序。
+            Feedback = _localization.GetString("Accounts.Edit.OpenFailed");
+        }
+    }
+
+    private Avalonia.Controls.Window? GetParentWindow()
+    {
+        // 通过 App 当前生命周期获取主窗口。
+        if (Avalonia.Application.Current?.ApplicationLifetime
+            is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            return desktop.MainWindow;
+        }
+
+        return null;
+    }
+
+    [RelayCommand]
+    private async Task SetDefaultAsync(AccountItemViewModel? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        var result = await _accountService.SetDefaultAsync(item.Account.Id);
+        if (result.IsSuccess)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            Feedback = _localization.GetString(result.Error!.Code);
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeleteAsync(AccountItemViewModel? item)
+    {
+        if (item is null)
+        {
+            return;
+        }
+
+        var confirmed = await DialogHelper.ConfirmAsync(
+            _localization.GetString("Common.Confirm"),
+            _localization.GetString("Accounts.Delete.Confirm", item.DisplayAlias),
+            _localization.GetString("Common.Delete"));
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await _accountService.DeleteAsync(item.Account.Id);
+        if (result.IsSuccess)
+        {
+            await LoadAsync();
+        }
+        else
+        {
+            Feedback = _localization.GetString(result.Error!.Code, result.Error.Arguments);
+        }
+    }
+}
+
+/// <summary>
+/// 账号列表项 ViewModel。
+/// </summary>
+public partial class AccountItemViewModel : ViewModelBase
+{
+    private readonly ILocalizationService _localization;
+
+    public Account Account { get; }
+
+    public AccountItemViewModel(Account account, ILocalizationService localization)
+    {
+        Account = account;
+        _localization = localization;
+        _localization.CultureChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(PlatformText));
+        };
+    }
+
+    public string DisplayAlias => Account.DisplayAlias;
+
+    public string PlatformText => Account.PlatformName;
+
+    public string HostText => Account.Host;
+
+    public string EmailText => Account.GitEmail;
+
+    public bool IsDefault => Account.IsDefault;
+
+    public bool Enabled => Account.Enabled;
+}

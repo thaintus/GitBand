@@ -1,0 +1,74 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitBinder.Desktop.ViewModels"
+             xmlns:loc="using:GitBinder.Desktop.Localization"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="GitBinder.Desktop.Views.DashboardView"
+             x:DataType="vm:DashboardViewModel">
+
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="32,28" Spacing="22" MaxWidth="1120">
+            <StackPanel Spacing="5">
+                <TextBlock FontSize="28" FontWeight="Bold" Text="{loc:Loc Dashboard.Title}" />
+                <TextBlock FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Dashboard.Description}" />
+            </StackPanel>
+
+            <Border Background="#1D4ED8" CornerRadius="16" Padding="28,24">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="24">
+                    <StackPanel Spacing="7">
+                        <TextBlock FontSize="12" FontWeight="Bold" Foreground="#BFDBFE" Text="{loc:Loc Dashboard.Hero.Kicker}" />
+                        <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="White" Text="{loc:Loc Dashboard.Hero.Title}" />
+                        <TextBlock FontSize="13" Foreground="#DBEAFE" Text="{loc:Loc Dashboard.Hero.Body}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="72" Height="72" CornerRadius="36" Background="#3B82F6" VerticalAlignment="Center">
+                        <TextBlock Text="⌘" FontSize="32" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                        <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Dashboard.AccountCount}" />
+                        <Border Grid.Column="1" Width="30" Height="30" Background="#EAF1FF" CornerRadius="8">
+                            <TextBlock Text="●" Foreground="#2563EB" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Grid.Row="1" FontSize="32" FontWeight="Bold" Text="{Binding AccountCount}" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                        <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Dashboard.ProjectCount}" />
+                        <Border Grid.Column="1" Width="30" Height="30" Background="#ECFDF5" CornerRadius="8">
+                            <TextBlock Text="◆" Foreground="#059669" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Grid.Row="1" FontSize="32" FontWeight="Bold" Text="{Binding ProjectCount}" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="20">
+                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                        <TextBlock FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Dashboard.BindingCount}" />
+                        <Border Grid.Column="1" Width="30" Height="30" Background="#FFF7E6" CornerRadius="8">
+                            <TextBlock Text="↔" Foreground="#B45309" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Grid.Row="1" FontSize="32" FontWeight="Bold" Text="{Binding BindingCount}" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="22">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border Width="42" Height="42" CornerRadius="12" Background="#ECFDF5">
+                        <TextBlock Text="★" FontSize="18" Foreground="#059669" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                        <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Dashboard.DefaultAccountLabel}" />
+                        <TextBlock FontSize="19" FontWeight="SemiBold" Text="{Binding DefaultAccountAlias}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
