@@ -31,6 +31,12 @@ internal static class StringsZhCn
         ["Common.Email"] = "邮箱",
         ["Common.Actions"] = "操作",
         ["Common.Status"] = "状态",
+        ["Common.Search.Clear"] = "清空搜索",
+        ["Common.Search.NoResults"] = "没有匹配的结果",
+        ["Common.Search.NoResultsHint"] = "试试其他关键词，或清空搜索查看全部数据。",
+        ["Accounts.SearchPlaceholder"] = "搜索账号、姓名、邮箱、平台或主机",
+        ["Projects.SearchPlaceholder"] = "搜索项目、路径、远程地址、协议或账号",
+        ["Platforms.SearchPlaceholder"] = "搜索平台名称或主机",
 
         // 导航
         ["Nav.Dashboard"] = "总览",

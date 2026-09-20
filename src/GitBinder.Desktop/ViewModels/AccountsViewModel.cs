@@ -24,7 +24,20 @@ public partial class AccountsViewModel : ViewModelBase
     public ObservableCollection<AccountItemViewModel> Items { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoMatches))]
     private bool _hasItems;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSearchText))]
+    private string _searchText = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoMatches))]
+    private IReadOnlyList<AccountItemViewModel> _filteredItems = [];
+
+    public bool HasSearchText => !string.IsNullOrEmpty(SearchText);
+
+    public bool HasNoMatches => HasItems && FilteredItems.Count == 0;
 
     [ObservableProperty]
     private AccountItemViewModel? _selectedItem;
@@ -54,6 +67,24 @@ public partial class AccountsViewModel : ViewModelBase
         }
 
         HasItems = Items.Count > 0;
+        ApplyFilter();
+    }
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    [RelayCommand]
+    private void ClearSearch() => SearchText = string.Empty;
+
+    private void ApplyFilter()
+    {
+        // 保留完整集合与条目引用，输入仅影响展示，不重新读取账号或访问凭据。
+        FilteredItems = Items.Where(item => ListSearch.Matches(
+            SearchText,
+            item.DisplayAlias,
+            item.Account.GitName,
+            item.EmailText,
+            item.PlatformText,
+            item.HostText)).ToList();
     }
 
     public async Task<Account?> FindByIdAsync(Guid id)

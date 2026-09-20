@@ -30,6 +30,12 @@ internal static class StringsEnUs
         ["Common.Email"] = "Email",
         ["Common.Actions"] = "Actions",
         ["Common.Status"] = "Status",
+        ["Common.Search.Clear"] = "Clear search",
+        ["Common.Search.NoResults"] = "No matching results",
+        ["Common.Search.NoResultsHint"] = "Try another keyword or clear the search to see all items.",
+        ["Accounts.SearchPlaceholder"] = "Search accounts, names, emails, platforms or hosts",
+        ["Projects.SearchPlaceholder"] = "Search projects, paths, remotes, protocols or accounts",
+        ["Platforms.SearchPlaceholder"] = "Search platform names or hosts",
 
         ["Nav.Dashboard"] = "Dashboard",
         ["Nav.Accounts"] = "Accounts",

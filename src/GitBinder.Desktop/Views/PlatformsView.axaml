@@ -8,7 +8,7 @@
              x:Class="GitBinder.Desktop.Views.PlatformsView"
              x:DataType="vm:PlatformsViewModel">
 
-    <Grid Margin="32,28" RowDefinitions="Auto,Auto,*,Auto">
+    <Grid Margin="32,28" RowDefinitions="Auto,Auto,Auto,*,Auto">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
             <StackPanel Spacing="7">
                 <TextBlock Classes="page-title" Text="{loc:Loc Platforms.Title}" />
@@ -20,8 +20,21 @@
             </StackPanel>
         </Grid>
 
+        <Grid Grid.Row="1" Margin="0,24,0,0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Grid>
+                <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         PlaceholderText="{loc:Loc Platforms.SearchPlaceholder}"
+                         AutomationProperties.Name="{loc:Loc Platforms.SearchPlaceholder}" Padding="38,9,12,9" />
+                <Path Width="16" Height="16" Margin="14,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                      Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.7"
+                      IsHitTestVisible="False" Data="M10,2 A8,8 0 1 1 10,18 A8,8 0 1 1 10,2 M16,16 L22,22" />
+            </Grid>
+            <Button Grid.Column="1" Content="{loc:Loc Common.Search.Clear}" Command="{Binding ClearSearchCommand}"
+                    Classes="ghost" IsVisible="{Binding HasSearchText}" VerticalAlignment="Center" />
+        </Grid>
+
         <!-- 编辑表单 -->
-        <Border Grid.Row="1" Margin="0,24,0,0" Classes="card" Padding="22" IsVisible="{Binding IsEditorOpen}">
+        <Border Grid.Row="2" Margin="0,16,0,0" Classes="card" Padding="22" IsVisible="{Binding IsEditorOpen}">
             <Grid ColumnDefinitions="*,*" ColumnSpacing="16" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Platforms.Name}" />
                 <TextBlock Grid.Row="0" Grid.Column="1" Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Common.Host}" />
@@ -35,9 +48,15 @@
         </Border>
 
         <!-- 平台列表 -->
-        <ScrollViewer Grid.Row="2" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="3" Margin="0,16,0,0" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
-                <ItemsControl ItemsSource="{Binding Items}">
+                <Border Classes="card" Padding="32" IsVisible="{Binding HasNoMatches}">
+                    <StackPanel Spacing="8" HorizontalAlignment="Center" MaxWidth="360">
+                        <TextBlock Classes="section-title" Text="{loc:Loc Common.Search.NoResults}" TextAlignment="Center" TextWrapping="Wrap" />
+                        <TextBlock Classes="page-description" Text="{loc:Loc Common.Search.NoResultsHint}" TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <ItemsControl ItemsSource="{Binding FilteredItems}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Classes="card" Margin="0,0,0,12">
@@ -80,6 +99,6 @@
 
             </StackPanel>
         </ScrollViewer>
-        <TextBlock Grid.Row="3" Margin="0,12,0,0" Text="{Binding Feedback}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" />
+        <TextBlock Grid.Row="4" Margin="0,12,0,0" Text="{Binding Feedback}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" />
     </Grid>
 </UserControl>

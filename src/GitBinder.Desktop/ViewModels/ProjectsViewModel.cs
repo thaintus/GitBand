@@ -29,13 +29,26 @@ public partial class ProjectsViewModel : ViewModelBase
     public ObservableCollection<ProjectItemViewModel> Items { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoMatches))]
     private bool _hasItems;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSearchText))]
+    private string _searchText = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoMatches))]
+    private IReadOnlyList<ProjectItemViewModel> _filteredItems = [];
 
     [ObservableProperty]
     private ProjectItemViewModel? _selectedItem;
 
     [ObservableProperty]
     private string _feedback = string.Empty;
+
+    public bool HasSearchText => !string.IsNullOrEmpty(SearchText);
+
+    public bool HasNoMatches => HasItems && FilteredItems.Count == 0;
 
     public ProjectsViewModel(
         IProjectRepository repository,
@@ -62,7 +75,7 @@ public partial class ProjectsViewModel : ViewModelBase
         var projects = await _repository.GetAllAsync();
         var accounts = await _accountRepository.GetAllAsync();
         var selectableAccounts = accounts.Where(account => account.Enabled).ToList();
-        Items.Clear();
+        var loadedItems = new List<ProjectItemViewModel>(projects.Count);
         foreach (var project in projects)
         {
             var binding = await _bindingRepository.GetByProjectIdAsync(project.Id);
@@ -74,7 +87,7 @@ public partial class ProjectsViewModel : ViewModelBase
 
             var effectiveAccount = _effectiveAccountResolver.Resolve(project);
             var effectiveReason = _effectiveAccountResolver.ResolveReason(project);
-            Items.Add(new ProjectItemViewModel(
+            loadedItems.Add(new ProjectItemViewModel(
                 project,
                 binding,
                 boundAccount,
@@ -84,7 +97,33 @@ public partial class ProjectsViewModel : ViewModelBase
                 _localization));
         }
 
+        Items.Clear();
+        foreach (var item in loadedItems)
+        {
+            Items.Add(item);
+        }
+
         HasItems = Items.Count > 0;
+        ApplyFilter();
+    }
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    [RelayCommand]
+    private void ClearSearch() => SearchText = string.Empty;
+
+    /// <summary>仅筛选已载入的项目，复用条目以保留地址编辑与账号选择状态。</summary>
+    private void ApplyFilter()
+    {
+        FilteredItems = Items.Where(item => ListSearch.Matches(
+            SearchText,
+            item.Name,
+            item.PathText,
+            item.OriginUrlDisplay,
+            item.RemoteHost,
+            item.ProtocolText,
+            item.BoundAccount?.DisplayAlias,
+            item.EffectiveAccount?.DisplayAlias)).ToList();
     }
 
     /// <summary>从统一的页头“新建”入口选择并登记仓库。</summary>
@@ -191,22 +230,31 @@ public partial class ProjectsViewModel : ViewModelBase
     /// <summary>账号下拉选择后立即创建或修改项目绑定。</summary>
     public async Task SwitchBindingAccountAsync(ProjectItemViewModel item, Account account)
     {
-        if (account.Id == item.BoundAccount?.Id)
+        // 筛选隐藏再显示会重建账号选择控件；正在改绑时忽略其初始化事件。
+        if (item.IsSwitchingBinding || account.Id == item.BoundAccount?.Id)
         {
             return;
         }
 
-        item.SelectedBindingAccount = account;
-        var result = await _bindingService.BindAsync(item.Project.Id, account.Id);
-        if (result.IsSuccess)
+        item.IsSwitchingBinding = true;
+        try
         {
-            Feedback = string.Empty;
-            await LoadAsync();
+            item.SelectedBindingAccount = account;
+            var result = await _bindingService.BindAsync(item.Project.Id, account.Id);
+            if (result.IsSuccess)
+            {
+                Feedback = string.Empty;
+                await LoadAsync();
+            }
+            else
+            {
+                item.RestoreBoundAccountSelection();
+                Feedback = _localization.GetString(result.Error!.Code, result.Error.Arguments);
+            }
         }
-        else
+        finally
         {
-            item.RestoreBoundAccountSelection();
-            Feedback = _localization.GetString(result.Error!.Code, result.Error.Arguments);
+            item.IsSwitchingBinding = false;
         }
     }
 
@@ -271,6 +319,9 @@ public partial class ProjectItemViewModel : ViewModelBase
 
     [ObservableProperty]
     private Account? _selectedBindingAccount;
+
+    [ObservableProperty]
+    private bool _isSwitchingBinding;
 
     [ObservableProperty]
     private bool _isRemoteEditorOpen;

@@ -18,6 +18,22 @@ public partial class PlatformsViewModel : ViewModelBase
     public ObservableCollection<PlatformItemViewModel> Items { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoMatches))]
+    private bool _hasItems;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSearchText))]
+    private string _searchText = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoMatches))]
+    private IReadOnlyList<PlatformItemViewModel> _filteredItems = [];
+
+    public bool HasSearchText => !string.IsNullOrEmpty(SearchText);
+
+    public bool HasNoMatches => HasItems && FilteredItems.Count == 0;
+
+    [ObservableProperty]
     private string _feedback = string.Empty;
 
     // 编辑表单字段。
@@ -52,7 +68,21 @@ public partial class PlatformsViewModel : ViewModelBase
             Items.Add(new PlatformItemViewModel(p, _localization));
         }
 
+        HasItems = Items.Count > 0;
+        ApplyFilter();
         ResetForm();
+    }
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    [RelayCommand]
+    private void ClearSearch() => SearchText = string.Empty;
+
+    private void ApplyFilter()
+    {
+        // Items 已按启用状态排序，过滤后沿用相对顺序，不干扰正在填写的平台表单。
+        FilteredItems = Items.Where(item => ListSearch.Matches(
+            SearchText, item.Name, item.Host)).ToList();
     }
 
     private void ResetForm()

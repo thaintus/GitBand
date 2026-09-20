@@ -8,7 +8,7 @@
              x:Class="GitBinder.Desktop.Views.ProjectsView"
              x:DataType="vm:ProjectsViewModel">
 
-    <Grid Margin="32,28" RowDefinitions="Auto,*,Auto">
+    <Grid Margin="32,28" RowDefinitions="Auto,Auto,*,Auto">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
             <StackPanel Spacing="7">
                 <TextBlock Classes="page-title" Text="{loc:Loc Nav.Projects}" />
@@ -17,7 +17,20 @@
             <Button Grid.Column="1" Content="{loc:Loc Projects.Add}" Command="{Binding CreateCommand}" Classes="primary" VerticalAlignment="Center" />
         </Grid>
 
-        <ScrollViewer Grid.Row="1" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
+        <Grid Grid.Row="1" Margin="0,24,0,0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+            <Grid>
+                <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         PlaceholderText="{loc:Loc Projects.SearchPlaceholder}"
+                         AutomationProperties.Name="{loc:Loc Projects.SearchPlaceholder}" Padding="38,9,12,9" />
+                <Path Width="16" Height="16" Margin="14,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                      Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.7"
+                      IsHitTestVisible="False" Data="M10,2 A8,8 0 1 1 10,18 A8,8 0 1 1 10,2 M16,16 L22,22" />
+            </Grid>
+            <Button Grid.Column="1" Content="{loc:Loc Common.Search.Clear}" Command="{Binding ClearSearchCommand}"
+                    Classes="ghost" IsVisible="{Binding HasSearchText}" VerticalAlignment="Center" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="2" Margin="0,16,0,0" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <Border Classes="card" Padding="32" IsVisible="{Binding !HasItems}">
                     <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="360">
@@ -29,7 +42,13 @@
                         <Button Content="{loc:Loc Projects.Add}" Command="{Binding CreateCommand}" Classes="secondary" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Border>
-                <ItemsControl ItemsSource="{Binding Items}">
+                <Border Classes="card" Padding="32" IsVisible="{Binding HasNoMatches}">
+                    <StackPanel Spacing="8" HorizontalAlignment="Center" MaxWidth="360">
+                        <TextBlock Classes="section-title" Text="{loc:Loc Common.Search.NoResults}" TextAlignment="Center" TextWrapping="Wrap" />
+                        <TextBlock Classes="page-description" Text="{loc:Loc Common.Search.NoResultsHint}" TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <ItemsControl ItemsSource="{Binding FilteredItems}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Classes="card" Margin="0,0,0,12">
@@ -81,7 +100,7 @@
                                             <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
                                                 <TextBlock Classes="caption" VerticalAlignment="Center" FontWeight="SemiBold" Text="{loc:Loc Projects.BindAccount}" />
                                                 <ComboBox Grid.Column="1" MinWidth="144" MaxWidth="168" ItemsSource="{Binding AvailableAccounts}" SelectedItem="{Binding SelectedBindingAccount}"
-                                                          SelectionChanged="OnBindingAccountSelectionChanged" VerticalAlignment="Center">
+                                                          SelectionChanged="OnBindingAccountSelectionChanged" IsEnabled="{Binding !IsSwitchingBinding}" VerticalAlignment="Center">
                                                     <ComboBox.ItemTemplate>
                                                         <DataTemplate>
                                                             <TextBlock Text="{Binding DisplayAlias}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayAlias}" />
@@ -118,6 +137,6 @@
 
             </StackPanel>
         </ScrollViewer>
-        <TextBlock Grid.Row="2" Margin="0,12,0,0" Text="{Binding Feedback}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" />
+        <TextBlock Grid.Row="3" Margin="0,12,0,0" Text="{Binding Feedback}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" />
     </Grid>
 </UserControl>
