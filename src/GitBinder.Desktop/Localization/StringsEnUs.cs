@@ -41,6 +41,7 @@ internal static class StringsEnUs
         ["App.Title"] = "GitBind - Git Repository Account Binding Manager",
         ["App.Tagline"] = "Manage local Git accounts, repositories and their bindings",
         ["Ui.Navigation.Section"] = "WORKSPACE",
+        ["Ui.Navigation.Tagline"] = "Repository identity",
 
         ["Dashboard.Accounts"] = "Accounts",
         ["Dashboard.Projects"] = "Repositories",

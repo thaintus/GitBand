@@ -2,22 +2,38 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="GitBinder.Desktop.App"
              xmlns:local="using:GitBinder.Desktop"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Light">
     <Application.Resources>
-        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F4F7FB" />
+        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#F3F5FA" />
         <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
-        <SolidColorBrush x:Key="SurfaceMutedBrush" Color="#F8FAFC" />
-        <SolidColorBrush x:Key="SurfaceStrongBrush" Color="#EAF1FF" />
-        <SolidColorBrush x:Key="BorderBrush" Color="#DCE4EF" />
-        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#172033" />
-        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#64748B" />
-        <SolidColorBrush x:Key="PrimaryBrush" Color="#2563EB" />
-        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#1D4ED8" />
-        <SolidColorBrush x:Key="SuccessBrush" Color="#059669" />
-        <SolidColorBrush x:Key="WarningBrush" Color="#B45309" />
-        <SolidColorBrush x:Key="DangerBrush" Color="#DC2626" />
-        <SolidColorBrush x:Key="NavigationBrush" Color="#111C33" />
-        <SolidColorBrush x:Key="NavigationMutedBrush" Color="#A9B7CE" />
+        <SolidColorBrush x:Key="SurfaceMutedBrush" Color="#F6F8FC" />
+        <SolidColorBrush x:Key="SurfaceStrongBrush" Color="#EDF0FF" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#E2E7F0" />
+        <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1D293F" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#617087" />
+        <SolidColorBrush x:Key="TextTertiaryBrush" Color="#7B889C" />
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#465BE8" />
+        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#3548CD" />
+        <SolidColorBrush x:Key="PrimaryPressedBrush" Color="#293CB9" />
+        <SolidColorBrush x:Key="PrimarySoftBrush" Color="#EDF0FF" />
+        <SolidColorBrush x:Key="SuccessBrush" Color="#147D70" />
+        <SolidColorBrush x:Key="SuccessSoftBrush" Color="#EAF7F2" />
+        <SolidColorBrush x:Key="WarningBrush" Color="#9A6116" />
+        <SolidColorBrush x:Key="WarningSoftBrush" Color="#FFF5E3" />
+        <SolidColorBrush x:Key="DangerBrush" Color="#BE3545" />
+        <SolidColorBrush x:Key="DangerSoftBrush" Color="#FFF0F1" />
+        <SolidColorBrush x:Key="DangerBorderBrush" Color="#F2CBD0" />
+        <SolidColorBrush x:Key="NavigationBrush" Color="#142035" />
+        <SolidColorBrush x:Key="NavigationHoverBrush" Color="#1E2D46" />
+        <SolidColorBrush x:Key="NavigationSelectedBrush" Color="#2B3C61" />
+        <SolidColorBrush x:Key="NavigationTextBrush" Color="#F2F5FD" />
+        <SolidColorBrush x:Key="NavigationMutedBrush" Color="#A2B1CC" />
+        <SolidColorBrush x:Key="NavigationAccentBrush" Color="#99ACFF" />
+        <SolidColorBrush x:Key="OnPrimaryBrush" Color="#FFFFFF" />
+        <LinearGradientBrush x:Key="HeroBackgroundBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+            <GradientStop Offset="0" Color="#273960" />
+            <GradientStop Offset="1" Color="#17243B" />
+        </LinearGradientBrush>
     </Application.Resources>
 
     <Application.DataTemplates>

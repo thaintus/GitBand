@@ -10,48 +10,59 @@
 
     <Grid Margin="32,28" RowDefinitions="Auto,*,Auto">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
-            <StackPanel Spacing="5">
-                <TextBlock FontSize="28" FontWeight="Bold" Text="{loc:Loc Nav.Accounts}" />
-                <TextBlock FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Accounts.Description}" />
+            <StackPanel Spacing="7">
+                <TextBlock Classes="page-title" Text="{loc:Loc Nav.Accounts}" />
+                <TextBlock Classes="page-description" Text="{loc:Loc Accounts.Description}" />
             </StackPanel>
             <Button Grid.Column="1" Content="{loc:Loc Accounts.New}" Command="{Binding AddCommand}" Classes="primary" VerticalAlignment="Center" />
         </Grid>
 
         <ScrollViewer Grid.Row="1" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Spacing="12">
+            <StackPanel>
+                <Border Classes="card" Padding="32" IsVisible="{Binding !HasItems}">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="360">
+                        <Border Width="56" Height="56" CornerRadius="16" Background="{DynamicResource PrimarySoftBrush}" HorizontalAlignment="Center">
+                            <Path Width="26" Height="26" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.6"
+                                  Data="M12,3 A4,4 0 1 1 12,11 A4,4 0 1 1 12,3 M4,22 V19 A7,7 0 0 1 11,12 H13 A7,7 0 0 1 20,19 V22" />
+                        </Border>
+                        <TextBlock Classes="page-description" Text="{loc:Loc Accounts.Description}" TextAlignment="Center" />
+                        <Button Content="{loc:Loc Accounts.New}" Command="{Binding AddCommand}" Classes="secondary" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
                 <ItemsControl ItemsSource="{Binding Items}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                    CornerRadius="14" Padding="0">
+                            <Border Classes="card" Margin="0,0,0,12">
                                 <Grid>
-                                    <Grid Margin="20" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                                        <Border Width="42" Height="42" CornerRadius="12" Background="#EAF1FF" VerticalAlignment="Top">
-                                            <TextBlock Text="●" Foreground="#2563EB" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Grid Margin="22,24,44,24" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                        <Border Width="46" Height="46" CornerRadius="14" Background="{DynamicResource PrimarySoftBrush}" VerticalAlignment="Top">
+                                            <Path Width="22" Height="22" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.6"
+                                                  Data="M12,3 A4,4 0 1 1 12,11 A4,4 0 1 1 12,3 M4,22 V19 A7,7 0 0 1 11,12 H13 A7,7 0 0 1 20,19 V22" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Spacing="6">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock FontSize="17" FontWeight="SemiBold" Text="{Binding DisplayAlias}" />
-                                                <Border Background="#FFF7E6" CornerRadius="8" Padding="7,2" IsVisible="{Binding IsDefault}">
-                                                    <TextBlock Text="{loc:Loc Accounts.Default}" FontSize="11" FontWeight="SemiBold" Foreground="#B45309" />
+                                        <StackPanel Grid.Column="1" Spacing="8">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" HorizontalAlignment="Left">
+                                                <TextBlock Classes="section-title" Text="{Binding DisplayAlias}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip.Tip="{Binding DisplayAlias}" />
+                                                <Border Grid.Column="1" Classes="badge badge-warning" IsVisible="{Binding IsDefault}" VerticalAlignment="Center">
+                                                    <TextBlock Text="{loc:Loc Accounts.Default}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" />
                                                 </Border>
-                                            </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Border Background="{DynamicResource SurfaceMutedBrush}" CornerRadius="7" Padding="8,3">
-                                                    <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding PlatformText}" />
+                                            </Grid>
+                                            <WrapPanel>
+                                                <Border Classes="badge" Margin="0,0,10,4" MaxWidth="260">
+                                                    <TextBlock Classes="caption" Text="{Binding PlatformText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PlatformText}" />
                                                 </Border>
-                                                <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding EmailText}" />
-                                            </StackPanel>
+                                                <TextBlock Classes="caption" Margin="0,4,0,4" Text="{Binding EmailText}" TextWrapping="Wrap" />
+                                            </WrapPanel>
                                         </StackPanel>
-                                        <StackPanel Grid.Column="2" Margin="0,0,30,0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                             <Button Content="{loc:Loc Accounts.SetDefault}" Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).SetDefaultCommand}"
                                                     CommandParameter="{Binding}" Classes="ghost" />
                                             <Button Content="{loc:Loc Accounts.Edit}" Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).EditCommand}"
-                                                    CommandParameter="{Binding}" Classes="ghost" />
+                                                    CommandParameter="{Binding}" Classes="secondary" />
                                         </StackPanel>
                                     </Grid>
                                     <Button Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Content="×"
                                             ToolTip.Tip="{loc:Loc Accounts.Delete}"
+                                            AutomationProperties.Name="{loc:Loc Accounts.Delete}"
                                             Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).DeleteCommand}"
                                             CommandParameter="{Binding}" Classes="icon-danger" />
                                 </Grid>

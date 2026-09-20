@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GitBinder.Application.Accounts;
@@ -46,6 +47,7 @@ public partial class MainViewModel : ViewModelBase
     private Account? _selectedGlobalAccount;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasGlobalModeFeedback))]
     private string _globalModeFeedback = string.Empty;
 
     public MainViewModel(
@@ -253,6 +255,8 @@ public partial class MainViewModel : ViewModelBase
             : _localization.GetString("GlobalMode.Enable");
 
     public bool GlobalModeDisabled => !GlobalModeEnabled;
+
+    public bool HasGlobalModeFeedback => !string.IsNullOrWhiteSpace(GlobalModeFeedback);
 }
 
 /// <summary>
@@ -264,10 +268,21 @@ public sealed partial class NavItem : ViewModelBase
 
     public ViewModelBase Page { get; }
 
+    public Geometry Icon { get; }
+
     public NavItem(string key, ViewModelBase page)
     {
         Key = key;
         Page = page;
+        // 导航图标采用同一套 24px 线条几何，不依赖符号字体或额外图标包。
+        Icon = Geometry.Parse(key switch
+        {
+            "Nav.Dashboard" => "M3,3 H10 V10 H3 Z M14,3 H21 V10 H14 Z M3,14 H10 V21 H3 Z M14,14 H21 V21 H14 Z",
+            "Nav.Accounts" => "M16,7 A4,4 0 1 1 8,7 A4,4 0 1 1 16,7 M4,21 V19 A8,8 0 0 1 20,19 V21",
+            "Nav.Projects" => "M3,6 H9 L12,9 H21 V20 H3 Z M3,6 V4 H10 L13,7 H21 V9",
+            "Nav.Platforms" => "M21,12 A9,9 0 1 1 3,12 A9,9 0 1 1 21,12 M3,12 H21 M12,3 C6,8 6,16 12,21 C18,16 18,8 12,3",
+            _ => "M3,6 H9 M15,6 H21 M3,18 H15 M21,18 H21 M15,6 A3,3 0 1 1 9,6 A3,3 0 1 1 15,6 M21,18 A3,3 0 1 1 15,18 A3,3 0 1 1 21,18"
+        });
     }
 
     [ObservableProperty]

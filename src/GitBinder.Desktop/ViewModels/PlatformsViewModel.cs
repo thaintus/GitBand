@@ -197,10 +197,6 @@ public sealed class PlatformItemViewModel
         ? _localization.GetString("Platforms.Status.Enabled")
         : _localization.GetString("Platforms.Status.Disabled");
 
-    public string StatusBackground => Enabled ? "#ECFDF5" : "#FEF2F2";
-
-    public string StatusForeground => Enabled ? "#047857" : "#DC2626";
-
     public string ToggleText => Enabled
         ? _localization.GetString("Platforms.Disable")
         : _localization.GetString("Platforms.Enable");

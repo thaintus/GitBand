@@ -1,31 +1,187 @@
-<Styles xmlns="https://github.com/avaloniaui">
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <!-- 独立主题隔离 Fluent 的模板状态色，避免悬停时覆盖危险按钮的红色。 -->
+        <ControlTheme x:Key="GitBindButtonTheme" TargetType="Button">
+            <Setter Property="FocusAdorner" Value="{x:Null}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Grid>
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Background="{TemplateBinding Background}"
+                                          BorderBrush="{TemplateBinding BorderBrush}"
+                                          BorderThickness="{TemplateBinding BorderThickness}"
+                                          CornerRadius="{TemplateBinding CornerRadius}"
+                                          Padding="{TemplateBinding Padding}"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True" />
+                        <Border Name="FocusRing" Margin="-3" CornerRadius="11" BorderThickness="2"
+                                BorderBrush="Transparent" IsHitTestVisible="False" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+        <ControlTheme x:Key="GitBindNavigationItemTheme" TargetType="ListBoxItem">
+            <Setter Property="FocusAdorner" Value="{x:Null}" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Name="NavigationSurface" Background="{TemplateBinding Background}" CornerRadius="10"
+                            BorderThickness="1" BorderBrush="Transparent">
+                        <Grid>
+                            <Border Name="NavigationMarker" Width="3" Height="18" CornerRadius="2"
+                                    HorizontalAlignment="Left" Background="Transparent" />
+                            <ContentPresenter Name="PART_ContentPresenter" Margin="{TemplateBinding Padding}"
+                                              Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </ControlTheme>
+    </Styles.Resources>
+
     <Style Selector="Window">
         <Setter Property="Background" Value="{DynamicResource AppBackgroundBrush}" />
-        <Setter Property="FontFamily" Value="Inter, Microsoft YaHei UI, Microsoft YaHei, sans-serif" />
+        <Setter Property="FontFamily" Value="Microsoft YaHei UI, Microsoft YaHei, Segoe UI, sans-serif" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+
+    <!-- 统一排版与容器；界面颜色集中通过 App 资源管理。 -->
+    <Style Selector="TextBlock.page-title">
+        <Setter Property="FontSize" Value="26" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="TextBlock.page-description">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="LineHeight" Value="21" />
+    </Style>
+    <Style Selector="TextBlock.section-title">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.muted">
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+    <Style Selector="TextBlock.caption">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+    <Style Selector="TextBlock.mono">
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Microsoft YaHei UI, monospace" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="BoxShadow" Value="0 3 12 0 #070F1D36" />
+    </Style>
+    <Style Selector="Border.inset">
+        <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="14" />
+    </Style>
+    <Style Selector="Border.badge">
+        <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.badge TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+    </Style>
+    <Style Selector="Border.badge-primary">
+        <Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}" />
+    </Style>
+    <Style Selector="Border.badge-primary TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="Border.badge-success">
+        <Setter Property="Background" Value="{DynamicResource SuccessSoftBrush}" />
+    </Style>
+    <Style Selector="Border.badge-success TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}" />
+    </Style>
+    <Style Selector="Border.badge-warning">
+        <Setter Property="Background" Value="{DynamicResource WarningSoftBrush}" />
+    </Style>
+    <Style Selector="Border.badge-warning TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+    </Style>
+    <Style Selector="Border.badge-danger">
+        <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
+    </Style>
+    <Style Selector="Border.badge-danger TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
     </Style>
 
     <Style Selector="Button">
+        <Setter Property="Theme" Value="{StaticResource GitBindButtonTheme}" />
         <Setter Property="FontSize" Value="13" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="Padding" Value="14,8" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Padding" Value="14,9" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceMutedBrush}" />
+    </Style>
+    <Style Selector="Button:pressed">
+        <Setter Property="Background" Value="{DynamicResource SurfaceStrongBrush}" />
     </Style>
 
     <Style Selector="Button.primary">
         <Setter Property="Background" Value="{DynamicResource PrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Foreground" Value="{DynamicResource OnPrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Background" Value="{DynamicResource PrimaryHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryHoverBrush}" />
+    </Style>
+    <Style Selector="Button.primary:pressed">
+        <Setter Property="Background" Value="{DynamicResource PrimaryPressedBrush}" />
+    </Style>
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="{DynamicResource PrimarySoftBrush}" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="Button.secondary:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceStrongBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
     </Style>
 
     <Style Selector="Button.danger">
-        <Setter Property="Background" Value="#FEF2F2" />
-        <Setter Property="BorderBrush" Value="#FECACA" />
+        <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBorderBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+    </Style>
+    <Style Selector="Button.danger:pointerover">
+        <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBrush}" />
+    </Style>
+    <Style Selector="Button.danger:pressed">
+        <Setter Property="Background" Value="{DynamicResource DangerBorderBrush}" />
     </Style>
 
     <Style Selector="Button.icon-danger">
         <Setter Property="Width" Value="28" />
         <Setter Property="Height" Value="28" />
+        <Setter Property="MinWidth" Value="28" />
         <Setter Property="MinHeight" Value="28" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="FontSize" Value="21" />
@@ -36,8 +192,8 @@
     </Style>
 
     <Style Selector="Button.icon-danger:pointerover">
-        <Setter Property="Background" Value="#FEF2F2" />
-        <Setter Property="BorderBrush" Value="#FECACA" />
+        <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBorderBrush}" />
     </Style>
 
     <Style Selector="Button.ghost">
@@ -45,17 +201,54 @@
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     </Style>
+    <Style Selector="Button.ghost:pointerover">
+        <Setter Property="Background" Value="{DynamicResource SurfaceStrongBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
+    <Style Selector="Button:disabled">
+        <Setter Property="Opacity" Value="0.42" />
+    </Style>
+    <Style Selector="Button:focus-visible /template/ Border#FocusRing">
+        <Setter Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+    </Style>
 
     <Style Selector="TextBox">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Padding" Value="10,7" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
     </Style>
 
     <Style Selector="ComboBox">
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="MinHeight" Value="38" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="12,7" />
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+    </Style>
+
+    <!-- 导航使用独立模板，消除系统主题对选中色与圆角的覆盖。 -->
+    <Style Selector="ListBox.sidebar ListBoxItem">
+        <Setter Property="Theme" Value="{StaticResource GitBindNavigationItemTheme}" />
+        <Setter Property="Margin" Value="0,3" />
+        <Setter Property="Padding" Value="15,13" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource NavigationMutedBrush}" />
+    </Style>
+    <Style Selector="ListBox.sidebar ListBoxItem:pointerover">
+        <Setter Property="Background" Value="{DynamicResource NavigationHoverBrush}" />
+    </Style>
+    <Style Selector="ListBox.sidebar ListBoxItem:selected">
+        <Setter Property="Background" Value="{DynamicResource NavigationSelectedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource NavigationTextBrush}" />
+    </Style>
+    <Style Selector="ListBox.sidebar ListBoxItem:selected /template/ Border#NavigationMarker">
+        <Setter Property="Background" Value="{DynamicResource NavigationAccentBrush}" />
+    </Style>
+    <Style Selector="ListBox.sidebar ListBoxItem:focus-visible /template/ Border#NavigationSurface">
+        <Setter Property="BorderBrush" Value="{DynamicResource NavigationAccentBrush}" />
     </Style>
 </Styles>

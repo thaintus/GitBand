@@ -44,6 +44,7 @@ internal static class StringsZhCn
         ["App.Title"] = "GitBind - Git 仓库账号绑定管理",
         ["App.Tagline"] = "本地 Git 账号、仓库及账号绑定关系管理工具",
         ["Ui.Navigation.Section"] = "工作区",
+        ["Ui.Navigation.Tagline"] = "仓库身份管理",
 
         // Dashboard
         ["Dashboard.Accounts"] = "账号总数",

@@ -10,64 +10,66 @@
 
     <Grid Margin="32,28" RowDefinitions="Auto,Auto,*,Auto">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
-            <StackPanel Spacing="5">
-                <TextBlock FontSize="28" FontWeight="Bold" Text="{loc:Loc Platforms.Title}" />
-                <TextBlock FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Platforms.Description}" />
+            <StackPanel Spacing="7">
+                <TextBlock Classes="page-title" Text="{loc:Loc Platforms.Title}" />
+                <TextBlock Classes="page-description" Text="{loc:Loc Platforms.Description}" />
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button Content="{loc:Loc Platforms.RestoreDefaults}" Command="{Binding RestoreDefaultsCommand}" Classes="ghost" />
                 <Button Content="{loc:Loc Common.Add.New}" Command="{Binding NewCommand}" Classes="primary" />
             </StackPanel>
         </Grid>
 
         <!-- 编辑表单 -->
-        <Border Grid.Row="1" Margin="0,22,0,0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                CornerRadius="14" Padding="18" IsVisible="{Binding IsEditorOpen}">
-            <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto">
-                <TextBlock Grid.Row="0" Grid.Column="0" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Platforms.Name}" />
-                <TextBlock Grid.Row="0" Grid.Column="1" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Common.Host}" />
+        <Border Grid.Row="1" Margin="0,24,0,0" Classes="card" Padding="22" IsVisible="{Binding IsEditorOpen}">
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="16" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
+                <TextBlock Grid.Row="0" Grid.Column="0" Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Platforms.Name}" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Common.Host}" />
                 <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding EditName}" PlaceholderText="{loc:Loc Platforms.NamePlaceholder}" />
                 <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EditHost}" PlaceholderText="{loc:Loc Platforms.HostPlaceholder}" />
-                <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" Spacing="4">
-                    <Button Content="{loc:Loc Common.Save}" Command="{Binding SaveCommand}" Classes="primary" />
+                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0" HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
                     <Button Content="{loc:Loc Common.Cancel}" Command="{Binding CancelEditCommand}" Classes="ghost" />
+                    <Button Content="{loc:Loc Common.Save}" Command="{Binding SaveCommand}" Classes="primary" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- 平台列表 -->
-        <ScrollViewer Grid.Row="2" Margin="0,16,0,0" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Spacing="8">
+        <ScrollViewer Grid.Row="2" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
                 <ItemsControl ItemsSource="{Binding Items}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                    CornerRadius="14" Padding="0" Margin="0,0,0,4">
+                            <Border Classes="card" Margin="0,0,0,12">
                                 <Grid>
-                                    <Grid Margin="18" ColumnDefinitions="Auto,1.2*,1.4*,Auto" ColumnSpacing="14">
-                                    <Border Width="34" Height="34" CornerRadius="9" Background="#F1F5F9">
-                                        <TextBlock Text="◇" FontSize="18" Foreground="#475569" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
-                                        <TextBlock FontSize="15" FontWeight="SemiBold" Text="{Binding Name}" />
-                                        <TextBlock FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Common.Platform}" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="2" Spacing="3" VerticalAlignment="Center">
-                                        <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Common.Host}" />
-                                        <TextBlock FontSize="13" Text="{Binding Host}" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="3" Margin="0,0,30,0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                        <Border Background="{Binding StatusBackground}" CornerRadius="7" Padding="8,3" VerticalAlignment="Center">
-                                            <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{Binding StatusForeground}" Text="{Binding StatusText}" />
+                                    <Grid Margin="22,24,44,24" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
+                                        <Border Width="44" Height="44" CornerRadius="13" Background="{DynamicResource PrimarySoftBrush}" VerticalAlignment="Center">
+                                            <Path Width="22" Height="22" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.5"
+                                                  Data="M12,2 A10,10 0 1 1 12,22 A10,10 0 1 1 12,2 M2,12 H22 M12,2 C6,7 6,17 12,22 M12,2 C18,7 18,17 12,22" />
                                         </Border>
-                                        <Button Content="{Binding ToggleText}" Command="{Binding $parent[ItemsControl].((vm:PlatformsViewModel)DataContext).ToggleEnabledCommand}"
-                                                CommandParameter="{Binding}" Classes="ghost" />
-                                        <Button Content="{loc:Loc Common.Edit}" Command="{Binding $parent[ItemsControl].((vm:PlatformsViewModel)DataContext).StartEditCommand}"
-                                                CommandParameter="{Binding}" Classes="ghost" />
-                                    </StackPanel>
+                                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
+                                            <TextBlock Classes="section-title" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                                <TextBlock Classes="caption" Text="{loc:Loc Common.Host}" VerticalAlignment="Center" />
+                                                <TextBlock Grid.Column="1" Classes="mono muted" Text="{Binding Host}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Host}" />
+                                            </Grid>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <Border Classes="badge badge-success" VerticalAlignment="Center" IsVisible="{Binding Enabled}">
+                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding StatusText}" />
+                                            </Border>
+                                            <Border Classes="badge badge-danger" VerticalAlignment="Center" IsVisible="{Binding !Enabled}">
+                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" Text="{Binding StatusText}" />
+                                            </Border>
+                                            <Button Content="{Binding ToggleText}" Command="{Binding $parent[ItemsControl].((vm:PlatformsViewModel)DataContext).ToggleEnabledCommand}"
+                                                    CommandParameter="{Binding}" Classes="ghost" />
+                                            <Button Content="{loc:Loc Common.Edit}" Command="{Binding $parent[ItemsControl].((vm:PlatformsViewModel)DataContext).StartEditCommand}"
+                                                    CommandParameter="{Binding}" Classes="secondary" />
+                                        </StackPanel>
                                     </Grid>
                                     <Button Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Content="×"
                                             ToolTip.Tip="{loc:Loc Common.Delete}"
+                                            AutomationProperties.Name="{loc:Loc Common.Delete}"
                                             Command="{Binding $parent[ItemsControl].((vm:PlatformsViewModel)DataContext).DeleteCommand}"
                                             CommandParameter="{Binding}" Classes="icon-danger" />
                                 </Grid>

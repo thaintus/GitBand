@@ -10,90 +10,104 @@
 
     <Grid Margin="32,28" RowDefinitions="Auto,*,Auto">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
-            <StackPanel Spacing="5">
-                <TextBlock FontSize="28" FontWeight="Bold" Text="{loc:Loc Nav.Projects}" />
-                <TextBlock FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Projects.Description}" />
+            <StackPanel Spacing="7">
+                <TextBlock Classes="page-title" Text="{loc:Loc Nav.Projects}" />
+                <TextBlock Classes="page-description" Text="{loc:Loc Projects.Description}" />
             </StackPanel>
             <Button Grid.Column="1" Content="{loc:Loc Projects.Add}" Command="{Binding CreateCommand}" Classes="primary" VerticalAlignment="Center" />
         </Grid>
 
         <ScrollViewer Grid.Row="1" Margin="0,24,0,0" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Spacing="8">
+            <StackPanel>
+                <Border Classes="card" Padding="32" IsVisible="{Binding !HasItems}">
+                    <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="360">
+                        <Border Width="56" Height="56" CornerRadius="16" Background="{DynamicResource PrimarySoftBrush}" HorizontalAlignment="Center">
+                            <Path Width="26" Height="26" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.6"
+                                  Data="M4,3 H15 L20,8 V21 H4 Z M15,3 V8 H20 M8,12 H16 M8,16 H14" />
+                        </Border>
+                        <TextBlock Classes="page-description" Text="{loc:Loc Projects.Description}" TextAlignment="Center" />
+                        <Button Content="{loc:Loc Projects.Add}" Command="{Binding CreateCommand}" Classes="secondary" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
                 <ItemsControl ItemsSource="{Binding Items}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-                                    CornerRadius="14" Padding="0" Margin="0,0,0,4">
+                            <Border Classes="card" Margin="0,0,0,12">
                                 <Grid>
-                                    <Grid Margin="20" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="10">
-                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="10">
-                                        <Border Width="30" Height="30" CornerRadius="8" Background="#ECFDF5">
-                                            <TextBlock Text="⌘" Foreground="#059669" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
-                                        <TextBlock FontSize="17" FontWeight="SemiBold" VerticalAlignment="Center" Text="{Binding Name}" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,30,0" Orientation="Horizontal" Spacing="4">
-                                        <Button Content="{loc:Loc Projects.EditRemote}" Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).StartEditRemoteCommand}"
-                                                CommandParameter="{Binding}" Classes="ghost" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8">
-                                        <Border Background="#EAF1FF" CornerRadius="7" Padding="8,3">
-                                            <TextBlock FontSize="12" Foreground="#1D4ED8" Text="{Binding BoundAccountLabel}" />
-                                        </Border>
-                                        <Border Background="#ECFDF5" CornerRadius="7" Padding="8,3">
-                                            <TextBlock FontSize="12" Foreground="#047857" Text="{Binding EffectiveAccountLabel}" />
-                                        </Border>
-                                        <Border Background="{DynamicResource SurfaceMutedBrush}" CornerRadius="7" Padding="8,3">
-                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding ProtocolLabel}" />
-                                        </Border>
-                                        <Border Background="{DynamicResource SurfaceMutedBrush}" CornerRadius="7" Padding="8,3">
-                                            <TextBlock FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding HostLabel}" />
-                                        </Border>
-                                    </StackPanel>
-                                    <TextBlock Grid.Row="2" Grid.ColumnSpan="2" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
-                                               Text="{Binding OriginUrlDisplay}" TextTrimming="CharacterEllipsis" />
-                                    <Border Grid.Row="3" Grid.ColumnSpan="2" Background="{DynamicResource SurfaceMutedBrush}" CornerRadius="10" Padding="12,9"
-                                            IsVisible="{Binding IsRemoteEditorOpen}">
-                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
-                                            <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Projects.RemoteUrl}" />
-                                            <TextBox Grid.Column="1" Text="{Binding EditingOriginUrl, Mode=TwoWay}" PlaceholderText="{loc:Loc Projects.RemoteUrlPlaceholder}" />
-                                            <Button Grid.Column="2" Content="{Binding RemoteProtocolSwitchText}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).SwitchRemoteProtocolCommand}"
-                                                    CommandParameter="{Binding}" Classes="ghost" />
-                                            <Button Grid.Column="3" Content="{loc:Loc Projects.SaveRemote}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).SaveRemoteCommand}"
-                                                    CommandParameter="{Binding}" Classes="ghost" />
-                                            <Button Grid.Column="4" Content="{loc:Loc Common.Cancel}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).CancelEditRemoteCommand}"
-                                                    CommandParameter="{Binding}" Classes="ghost" />
-                                        </Grid>
-                                    </Border>
-                                    <Border Grid.Row="4" Grid.ColumnSpan="2" Background="{DynamicResource SurfaceMutedBrush}" CornerRadius="10" Padding="12,9">
-                                        <Grid ColumnDefinitions="Auto,190,Auto,Auto,*" ColumnSpacing="8">
-                                            <TextBlock VerticalAlignment="Center" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Text="{loc:Loc Projects.BindAccount}" />
-                                            <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableAccounts}" SelectedItem="{Binding SelectedBindingAccount}"
-                                                      SelectionChanged="OnBindingAccountSelectionChanged">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <TextBlock Text="{Binding DisplayAlias}" />
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
-                                            <Button Grid.Column="2" Content="{loc:Loc Common.Test}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).TestBindingCommand}"
-                                                    CommandParameter="{Binding}" Classes="ghost" IsEnabled="{Binding HasBinding}" />
-                                            <Button Grid.Column="3" Content="{loc:Loc Projects.Unbind}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).UnbindCommand}"
-                                                    CommandParameter="{Binding}" Classes="danger" IsEnabled="{Binding HasBinding}" />
-                                            <Border Grid.Column="4" Background="#ECFDF5" CornerRadius="7" Padding="8,3" HorizontalAlignment="Right">
-                                                <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="#047857" Text="{Binding EffectiveReasonLabel}" />
+                                    <Grid Margin="22" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="14">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,0,28,0">
+                                            <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource PrimarySoftBrush}">
+                                                <Path Width="20" Height="20" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.6"
+                                                      Data="M4,3 H15 L20,8 V21 H4 Z M15,3 V8 H20 M8,12 H16 M8,16 H14" />
                                             </Border>
+                                            <TextBlock Grid.Column="1" Classes="section-title" VerticalAlignment="Center" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                            <Button Grid.Column="2" Content="{loc:Loc Projects.EditRemote}" Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).StartEditRemoteCommand}"
+                                                    CommandParameter="{Binding}" Classes="secondary" VerticalAlignment="Center" />
                                         </Grid>
-                                    </Border>
-                                    <TextBlock Grid.Row="5" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Text="{Binding PathText}" TextTrimming="CharacterEllipsis" />
+                                        <WrapPanel Grid.Row="1" Margin="0,0,-8,-6">
+                                            <Border Classes="badge badge-primary" Margin="0,0,8,6" MaxWidth="260">
+                                                <TextBlock FontSize="12" Foreground="{DynamicResource PrimaryBrush}" Text="{Binding BoundAccountLabel}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding BoundAccountLabel}" />
+                                            </Border>
+                                            <Border Classes="badge badge-success" Margin="0,0,8,6" MaxWidth="260">
+                                                <TextBlock FontSize="12" Foreground="{DynamicResource SuccessBrush}" Text="{Binding EffectiveAccountLabel}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EffectiveAccountLabel}" />
+                                            </Border>
+                                            <Border Classes="badge" Margin="0,0,8,6">
+                                                <TextBlock Classes="caption" Text="{Binding ProtocolLabel}" />
+                                            </Border>
+                                            <Border Classes="badge" Margin="0,0,8,6" MaxWidth="280">
+                                                <TextBlock Classes="caption" Text="{Binding HostLabel}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding HostLabel}" />
+                                            </Border>
+                                        </WrapPanel>
+                                        <TextBlock Grid.Row="2" Classes="mono muted" Text="{Binding OriginUrlDisplay}" TextTrimming="CharacterEllipsis"
+                                                   ToolTip.Tip="{Binding OriginUrlDisplay}" />
+                                        <Border Grid.Row="3" Classes="inset" IsVisible="{Binding IsRemoteEditorOpen}">
+                                            <StackPanel Spacing="10">
+                                                <TextBlock Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Projects.RemoteUrl}" />
+                                                <TextBox Text="{Binding EditingOriginUrl, Mode=TwoWay}" PlaceholderText="{loc:Loc Projects.RemoteUrlPlaceholder}" />
+                                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                                    <Button Content="{Binding RemoteProtocolSwitchText}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).SwitchRemoteProtocolCommand}"
+                                                            CommandParameter="{Binding}" Classes="secondary" />
+                                                    <Button Grid.Column="2" Content="{loc:Loc Common.Cancel}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).CancelEditRemoteCommand}"
+                                                            CommandParameter="{Binding}" Classes="ghost" />
+                                                    <Button Grid.Column="3" Content="{loc:Loc Projects.SaveRemote}"
+                                                            Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).SaveRemoteCommand}"
+                                                            CommandParameter="{Binding}" Classes="primary" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                        <Border Grid.Row="4" Classes="inset">
+                                            <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
+                                                <TextBlock Classes="caption" VerticalAlignment="Center" FontWeight="SemiBold" Text="{loc:Loc Projects.BindAccount}" />
+                                                <ComboBox Grid.Column="1" MinWidth="144" MaxWidth="168" ItemsSource="{Binding AvailableAccounts}" SelectedItem="{Binding SelectedBindingAccount}"
+                                                          SelectionChanged="OnBindingAccountSelectionChanged" VerticalAlignment="Center">
+                                                    <ComboBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding DisplayAlias}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding DisplayAlias}" />
+                                                        </DataTemplate>
+                                                    </ComboBox.ItemTemplate>
+                                                </ComboBox>
+                                                <Button Grid.Column="2" Content="{loc:Loc Common.Test}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).TestBindingCommand}"
+                                                        CommandParameter="{Binding}" Classes="ghost" IsEnabled="{Binding HasBinding}" VerticalAlignment="Center" />
+                                                <Button Grid.Column="3" Content="{loc:Loc Projects.Unbind}"
+                                                        Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).UnbindCommand}"
+                                                        CommandParameter="{Binding}" Classes="danger" IsEnabled="{Binding HasBinding}" VerticalAlignment="Center" />
+                                                <Border Grid.Column="4" Classes="badge badge-success" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                    <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding EffectiveReasonLabel}" TextWrapping="Wrap" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                        <Grid Grid.Row="5" ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.6" VerticalAlignment="Center"
+                                                  Data="M2,6 H10 L12,9 H22 V21 H2 Z M2,6 V3 H10 L12,6 H20 V9" />
+                                            <TextBlock Grid.Column="1" Classes="caption" Text="{Binding PathText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PathText}" />
+                                        </Grid>
                                     </Grid>
                                     <Button Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Content="×"
                                             ToolTip.Tip="{loc:Loc Projects.Remove}"
+                                            AutomationProperties.Name="{loc:Loc Projects.Remove}"
                                             Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).RemoveCommand}"
                                             CommandParameter="{Binding}" Classes="icon-danger" />
                                 </Grid>
