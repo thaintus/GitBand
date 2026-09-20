@@ -163,7 +163,7 @@ dotnet test GitBinder.slnx -c Debug --no-build
 
 ```powershell
 # 版本号为示例，可按本次发布计划调整
-.\build\publish.ps1 -Version 1.0.13
+.\build\publish.ps1 -Version 1.1.0
 .\build\publish\app\GitBinder.Desktop.exe
 ```
 
@@ -176,15 +176,15 @@ dotnet test GitBinder.slnx -c Debug --no-build
 
 ```powershell
 # 同时发布 Desktop 与 Credential Helper，再生成 Windows x64 安装包
-.\build\build-installer.ps1 -Version 1.0.13
+.\build\build-installer.ps1 -Version 1.1.0
 ```
 
-输出为 `dist/GitBinder-1.0.13-setup.exe`。请为新发行版指定新的版本号，避免覆盖同名历史产物。该命令负责发布和打包，**不执行单元测试**。
+输出为 `dist/GitBinder-1.1.0-setup.exe`。请为新发行版指定新的版本号，避免覆盖同名历史产物。该命令负责发布和打包，**不执行单元测试**。
 
 如需串联构建、测试和打包：
 
 ```powershell
-.\build\build.ps1 -Configuration Release -Package -Version 1.0.13
+.\build\build.ps1 -Configuration Release -Package -Version 1.1.0
 ```
 
 ## 项目结构
