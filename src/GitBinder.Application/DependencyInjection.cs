@@ -19,8 +19,11 @@ public static class DependencyInjection
     {
         // 应用服务。
         services.AddSingleton<AccountService>();
+        services.AddSingleton<AccountIdentitySyncService>();
         services.AddSingleton<PlatformService>();
         services.AddSingleton<ProjectService>();
+        services.AddSingleton<ProjectGroupService>();
+        services.AddSingleton<ProjectTransferService>();
         services.AddSingleton<BindingService>();
         services.AddSingleton<IGlobalModeApplier>(sp => sp.GetRequiredService<BindingService>());
         services.AddSingleton<GlobalModeService>();

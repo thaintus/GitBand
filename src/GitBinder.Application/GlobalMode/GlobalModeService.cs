@@ -167,12 +167,16 @@ public sealed class GlobalModeService
         var stored = await GetSnapshotAsync(ct);
         if (stored is not null)
         {
-            // 旧版本快照没有 credential.helper。旧实现不会改写该配置，故在首次升级
-            // 应用无回退认证前补采集当前 Helper，避免关闭全局模式时丢失用户原有凭据链。
-            if (stored.CredentialHelpers is null)
+            // 新增托管配置在首次覆盖前补采集，但不可用当前账号覆盖历史 user.email。
+            if (stored.CredentialHelpers is null || stored.EmailConfig is null)
             {
                 var current = await _globalGitConfigApplier.CaptureAsync(ct);
-                stored = stored with { CredentialHelpers = current.CredentialHelpers };
+                stored = stored with
+                {
+                    CredentialHelpers = stored.CredentialHelpers ?? current.CredentialHelpers,
+                    EmailConfig = stored.EmailConfig ?? new GitEmailConfigSnapshot(
+                        stored.UserEmail, current.EmailConfig?.AuthorEmail, current.EmailConfig?.CommitterEmail),
+                };
                 await _settings.SetAsync(GlobalGitSnapshotKey, JsonSerializer.Serialize(stored), ct);
             }
 

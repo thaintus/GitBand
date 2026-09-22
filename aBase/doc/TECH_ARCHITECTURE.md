@@ -259,6 +259,16 @@ user.name
 user.email
 ```
 
+### 提交邮箱为空的语义
+
+- `Account.GitEmail` 留空或纯空白表示“新提交不携带邮箱”，不是继承默认账号或系统/全局邮箱。`GitConfigApplier` 应用身份时，对当前作用域的 `user.email`、`author.email`、`committer.email` 都执行 `--replace-all` 并传入显式空字符串，不用 `--unset-all`；填写邮箱时三个配置项统一为该值。普通/全局模式遵循既有有效账号优先级。
+- 依据 [Git 官方 ident.c（v2.51.0）](https://github.com/git/git/blob/v2.51.0/ident.c)：显式空 `user.email` 会标记为已配置，阻止默认邮箱推断，可生成 `姓名 <>`；独立非空作者/提交者邮箱优先于 `user.email`，故必须同时覆盖。该结论来自源码核对，本轮没有执行真实提交验证。
+- `GitEmailConfigSnapshot(UserEmail, AuthorEmail, CommitterEmail)` 用 `null` 表示未配置、`""` 表示明确无邮箱。捕获仅裁剪命令输出行尾，缺失键（exit 1）与读取失败严格区分；恢复只有 null 才删除键，其他值原样写回。
+- 仓库快照增加可空 `email_config_json` 列，旧 `user_email` 保留。首次升级应用绑定前，补采集此前未托管的 `author.email`/`committer.email`，但 `user.email` 仍保留历史快照值；旧仓库快照空值无法追溯缺失与显式空的区别，维持旧版空值删除语义。全局 JSON 快照可选 `EmailConfig`，升级同样只补新增配置，不覆盖原 UserEmail。
+- 新建绑定、启动重新应用、全局切换、协议确认和账号编辑同步之前，都先确保快照完整。仓储显式列名查询，幂等升级保留旧行；损坏邮箱快照不能静默视为缺失后继续覆盖配置。
+- `AccountIdentitySyncService` 在账号编辑持久化成功后协调同步：普通模式仅同步实际生效为该账号的绑定仓库身份，不改 origin/认证；编辑当前全局账号时重新应用全局配置与已绑定仓库。持久化成功但同步失败单独提示并留窗重试，不宣称事务整体失败。新建账号无现有绑定时不额外写入 Git。
+- 隐私边界：不重写旧提交，也不改变 amend/rebase/cherry-pick 保留的作者；显式环境变量、命令行/IDE 作者覆盖、worktree 等更高优先级配置仍可覆盖管理配置。未登记仓库的本地配置仍优先于全局配置；远程平台是否接受空邮箱由服务器策略决定。同步失败时不能保证邮箱已清空，用户应先处理提示再提交。
+
 Authentication Identity：
 
 ```text
@@ -292,11 +302,37 @@ Project 仅表示：
 
 GitBinder 不复制 Repository 内容。
 
+### 克隆与快进拉取
+
+- 新增 Application 端口 `IGitTransfer` 与用例服务 `ProjectTransferService`，由 Infrastructure 的 `GitTransfer` 通过 `ICommandExecutor` 执行参数数组；不引入平台 API、提交、推送或冲突解决器。
+- 克隆先验证 HTTPS/SSH 地址与目标目录、按 `EffectiveAccountResolver.ResolveForClone` 选择认证账号；完成后登记时跳过默认绑定，直接绑定用户所选账号。全局模式控制实际认证，所选绑定保留供关闭全局模式后使用。
+- 拉取先检查干净工作区、进行中的 Git 操作和 origin 跟踪分支，再用当前有效账号执行 `pull --ff-only --no-rebase --no-recurse-submodules`；禁用自动 stash，不重置或强推，不递归拉取子模块。
+- HTTPS 重置 helper 与额外认证头，在精确 URL 作用域指定带账号 ID 的凭据助手；SSH 指定单个私钥，保持严格主机校验，仅允许 Agent 为该密钥签名。子进程禁止交互，隔离全局/系统 Git 配置及继承的仓库路径环境，不更改开发机环境或配置文件。
+- `CommandExecutionOptions` 提供子进程环境与 30 分钟超时；取消/超时终止进程树，错误不回显原始 stderr。失败不自动删除部分克隆目录，登记和绑定失败分别反馈。数据库 Schema 不变。
+
 ### Remote 协议切换
+
+项目页面加载时经 `ProjectService.RefreshMetadataAsync` 读取本地 origin，更新缓存协议和主机，不联网、不改 Git 配置。读取失败时保留缓存并提示，未配置 origin 与读取失败分别使用空字符串与 null 表示；禁止将含 HTTP 用户信息的地址自动写入缓存。项目仓储使用显式列名保持映射稳定。
+
+项目卡片支持通过 `ProjectService.UpdatePathAsync` 重新定位移动后的同一仓库：要求绝对路径，校验 Git 仓库并解析真实根目录后去重，再一次性保存路径、GitDir、origin、协议、主机和分支，清除旧测试结果。保留原项目 ID、名称、绑定与配置快照，不改写 Git 配置，不搬移或删除文件；用户保存前确认是同一仓库，不能用于替换成其他仓库或新克隆副本。
 
 项目“修改地址”编辑区可在标准 Remote 地址间切换：`https://host/group/repo.git` 转为 `git@host:group/repo.git`，反向切换则生成 HTTPS 地址。切换只修改编辑框内容，用户仍须点击“保存地址”才会执行本地 `git remote set-url`。
 
 带 HTTPS 用户信息、查询参数、片段或非默认端口的地址不自动转换，避免错误猜测 SSH/HTTPS 服务端口；此类地址由用户手动维护。
+
+#### 账号变更与协议确认
+
+- `BindingService.GetProtocolChangeAsync` 只读检查实际 origin 与当前有效账号（全局 > 绑定 > 默认），仅在缺少当前协议凭据但已配置另一协议凭据时生成 `BindingProtocolChange`；双协议账号不强制转换。复用 `GitTransferRemote` 与 `GitRemoteUrlConverter`，不猜测平台、端口或仓库路径。
+- 项目改绑仍选择即保存；之后由 `ProjectsViewModel` 展示协议变更确认，取消保留已保存的绑定和原地址。已有错配项目在测试、单项拉取前同样确认，取消则不连接。全局模式变化不批量改写地址；分组批量拉取保留逐项失败报告。
+- 确认记录包含项目、实际路径、当前有效账号和原/目标地址。`ChangeProtocolAsync` 执行前重新检查，过期则拒绝；仅修改 origin（不改独立 pushurl），按新协议重新应用同一个有效账号，并同步项目元数据，不覆盖已有解绑快照。
+- 失败后尝试恢复本次地址与同一有效账号的认证配置。回滚前先读取实际 origin，仅当它仍是本次目标地址才回写原地址；不覆盖 IDE 并发改出的第三个地址。不能确认实际地址或恢复失败时明确提示，认证禁止回退到其他账号。
+- 协议预览、确认和回滚通过 `IGitService.GetTransferOriginUrlAsync/SetTransferOriginUrlAsync` 使用与 `GitTransfer` 一致的隔离环境，避免全局 insteadOf 或继承的 GIT_DIR 令预览与真实测试指向不同协议/仓库；其他既有元数据读取接口行为保留。
+
+#### 只读认证测试与凭据保留
+
+- `BindingService.TestAsync` 不再先调用配置应用器；通过 `IGitTransfer.TestAsync` 读取实际远程地址、复用拉取的账号认证参数与非交互环境执行 ls-remote。测试默认 60 秒超时，拉取/克隆仍 30 分钟；SSH 临时空配置覆盖请求生命周期。
+- HTTPS 缺凭据、SSH 缺私钥、无法启动助手、网络及权限问题使用结构化 DomainError；TestRemoteResult 只携带成功标记、错误与耗时，不回显原始 stderr、Token 或服务端输出。旧 `IGitService.TestRemoteAsync` 移除。
+- 账号编辑保留原 SecretId 是否存在的状态，不读取或回填明文。HTTPS 用户名仍存在且已有 SecretId 时，空白凭据不降低认证能力；可恢复旧版误降级但仍有凭据引用的记录。新建和重新编辑均重置此状态，SSH 增删按现有表单重新判断组合类型；清空 HTTPS 用户名停用该能力，但不删除原秘密。
 
 ---
 
@@ -2062,3 +2098,27 @@ Self-contained
 该架构的核心原则：
 
 > **业务逻辑跨平台、平台能力通过 Adapter 隔离、Git 行为依赖系统标准 Git/OpenSSH、敏感数据使用操作系统 Secret Store、所有用户可见文本从第一版开始通过 i18n Resource 管理。**
+
+## 项目分组与批量拉取
+
+- 分组实体为 ProjectGroup，ProjectGroupService 验证名称并管理归属；IProjectGroupRepository 由 SQLite ProjectGroupRepository 实现。归属独立存表，不修改 Project 的路径、Remote、绑定或快照。
+- project_groups 保存名称，project_group_members 以 project_id 为主键，支持一个项目一个分组；缺省无归属记录即未分组。Schema 与 DatabaseInitializer 均幂等创建新增表，历史项目原样保留。
+- 删除分组和移除项目时，仓储通过显式事务清理归属关系；不依赖 SQLite 的 foreign_keys 开关，不级联删除用户项目或源码。
+- ProjectsViewModel.Groups.cs 负责侧栏、新建/重命名/删除确认、即时归类及搜索叠加；新建/重命名由 DialogHelper 打开 GroupEditDialog，通过保存回调调用 ProjectGroupService，取消不写入、失败在弹窗内展示并允许重试。仅更改分组时不重新读取 Git 元数据，名称校验与归属持久化仍在原应用/仓储层。
+- ProjectTransferService.PullGroupAsync 在应用层从仓储获取完整分组项目快照，持有与单项拉取/克隆相同的互斥锁，并顺序调用共用 PullCoreAsync。继续处理单项失败，取消后停止剩余项目，返回 GroupPullReport；进度不暴露凭据或原始命令错误。
+- 所有拉取仍由 EffectiveAccountResolver 决策实际账号，全局模式优先；保持工作区保护及仅快进策略。未增加平台 API 枚举、推送或自动合并功能。
+
+## 桌面结果通知与 Windows 安装图标
+
+- ViewModelBase.SetNotice 统一发布操作结果，经 DialogHelper 的 UI 调度与串行队列显示 MessageDialog；不持久化消息，不改变业务错误码。账号编辑通知关联对应编辑窗口，应用退出期间的窗口异常不会向外传播。
+- 项目 OperationProgress 与结果 Feedback 分离；批量汇总包含逐项结果，传输后的列表刷新错误合并到同一结果。MessageDialog 与 ConfirmationDialog 使用 SelectableTextBlock + ScrollViewer，提供原生文本选择及 Ctrl+C；不使用只读 TextBox、复制全部按钮或额外剪贴板写入逻辑。通知队列、消息来源及错误脱敏规则不变。
+- Desktop 工程通过 ApplicationIcon 嵌入 Windows 原生图标；Inno Setup 的 UninstallDisplayIcon 显式指向安装目录的 gitbinder.ico。托盘、快捷方式和安装项复用已有图标，不变更 AppId 或用户数据路径。
+- 发布脚本逐项检查 dotnet publish 退出码，避免主程序失败后继续生成不完整安装包；清理仅限已校验的仓库内 build/publish 临时产物。
+
+## SSH 传输空配置与诊断
+
+- 克隆与拉取通过 EmptySshConfig 为每次操作创建真实空配置文件，传给 SSH 的 -F 参数；不依赖不同 SSH 实现对 NUL 或 /dev/null 的解释。
+- 文件用 CreateNew 唯一创建，关闭创建句柄后以只读句柄持有并允许共享读取，禁止外部写入；不使用 DeleteOnClose，也不持有写句柄，以兼容 Windows OpenSSH。操作结束或失败后 Dispose 清理唯一临时文件；异常退出时可能残留不含密钥或凭据的空文件。
+- 保持指定私钥、IdentitiesOnly、非交互认证、严格主机校验及仅快进更新，不读取其他账号配置作为认证回退。
+- GitTransferFailure 将 stderr 归类为固定的安全错误码，附带失败命令阶段和退出码，由中英文资源解释；涵盖空配置读取、主机密钥、认证、DNS、连接、超时、证书、目录所有权、快进分叉、锁和本地文件错误。未知诊断不回显原始文本，避免服务端输出或 URL 中夹带凭据。
+- 本次不改变既有全局/系统 Git 配置隔离策略，HTTPS 证书、代理和 safe.directory 兼容性仍须按具体错误单独评估。

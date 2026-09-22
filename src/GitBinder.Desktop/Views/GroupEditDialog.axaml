@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:GitBinder.Desktop.Localization"
+        x:Class="GitBinder.Desktop.Views.GroupEditDialog"
+        Width="464" MinHeight="280" MaxHeight="520" SizeToContent="Height"
+        CanResize="False" ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/avalonia-logo.ico"
+        Background="{DynamicResource SurfaceBrush}"
+        Opened="OnOpened" Closing="OnClosing" KeyDown="OnKeyDown">
+    <Grid RowDefinitions="*,Auto">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="28,24" Spacing="22">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
+                    <Border Width="40" Height="40" CornerRadius="12"
+                            Background="{DynamicResource PrimarySoftBrush}" VerticalAlignment="Top">
+                        <Path Width="20" Height="20" Stretch="Uniform"
+                              Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M3,6 L9,6 L11,8 L21,8 L21,20 L3,20 Z M3,6 L3,4 L9,4 L11,6 L19,6" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="6">
+                        <TextBlock x:Name="Heading" FontSize="20" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <SelectableTextBlock Text="{loc:Loc Key=Groups.EditorHint}"
+                                             FontSize="12" LineHeight="20" TextWrapping="Wrap"
+                                             Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                </Grid>
+                <StackPanel Spacing="9">
+                    <TextBlock Text="{loc:Loc Key=Groups.Name}" FontSize="12" FontWeight="Medium"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                    <TextBox x:Name="NameInput" MaxLength="60" MinHeight="40"
+                             PlaceholderText="{loc:Loc Key=Groups.NamePlaceholder}"
+                             AutomationProperties.Name="{loc:Loc Key=Groups.Name}" />
+                    <Border x:Name="ErrorPanel" IsVisible="False" Padding="12,10" CornerRadius="10"
+                            Background="{DynamicResource DangerSoftBrush}">
+                        <SelectableTextBlock x:Name="ErrorText" FontSize="12" LineHeight="20"
+                                             TextWrapping="Wrap" Foreground="{DynamicResource DangerBrush}" />
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="1" Padding="28,16" BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SurfaceMutedBrush}">
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                <Button x:Name="CancelButton" Content="{loc:Loc Key=Common.Cancel}" Classes="ghost"
+                        MinWidth="80" MinHeight="36" Click="OnCancelClick" />
+                <Button x:Name="SaveButton" Content="{loc:Loc Key=Common.Save}" Classes="primary"
+                        MinWidth="92" MinHeight="36" IsDefault="True" Click="OnSaveClick" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

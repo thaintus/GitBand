@@ -1,5 +1,6 @@
 using GitBinder.Domain.Accounts;
 using GitBinder.Domain.Common;
+using GitBinder.Domain.GlobalMode;
 
 namespace GitBinder.Application.GlobalMode;
 
@@ -8,7 +9,8 @@ public sealed record GlobalGitConfigSnapshot(
     string? UserName,
     string? UserEmail,
     string? SshCommand,
-    string[]? CredentialHelpers = null);
+    string[]? CredentialHelpers = null,
+    GitEmailConfigSnapshot? EmailConfig = null);
 
 /// <summary>读写 Git 用户级配置（git config --global）。</summary>
 public interface IGlobalGitConfigApplier

@@ -46,9 +46,16 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private Account? _selectedGlobalAccount;
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasGlobalModeFeedback))]
     private string _globalModeFeedback = string.Empty;
+    public string GlobalModeFeedback
+    {
+        get => _globalModeFeedback;
+        set
+        {
+            SetNotice(ref _globalModeFeedback, value);
+            OnPropertyChanged(nameof(HasGlobalModeFeedback));
+        }
+    }
 
     public MainViewModel(
         ILocalizationService localization,

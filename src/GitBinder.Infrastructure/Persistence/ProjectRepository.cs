@@ -10,6 +10,7 @@ namespace GitBinder.Infrastructure.Persistence;
 public sealed class ProjectRepository : IProjectRepository
 {
     private readonly DatabaseContext _db;
+    private const string Columns = "id, name, repository_path, canonical_path, git_dir, origin_url, remote_host, remote_protocol, current_branch, last_test_result, last_test_at, created_at, updated_at";
 
     public ProjectRepository(DatabaseContext db) => _db = db;
 
@@ -17,7 +18,7 @@ public sealed class ProjectRepository : IProjectRepository
     {
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT * FROM projects WHERE id = $id";
+        command.CommandText = $"SELECT {Columns} FROM projects WHERE id = $id";
         command.Parameters.AddWithValue("$id", id.ToString());
 
         await using var reader = await command.ExecuteReaderAsync(ct);
@@ -34,7 +35,7 @@ public sealed class ProjectRepository : IProjectRepository
         var result = new List<Project>();
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT * FROM projects ORDER BY name ASC";
+        command.CommandText = $"SELECT {Columns} FROM projects ORDER BY name ASC";
 
         await using var reader = await command.ExecuteReaderAsync(ct);
         while (await reader.ReadAsync(ct))
@@ -49,7 +50,7 @@ public sealed class ProjectRepository : IProjectRepository
     {
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT * FROM projects WHERE canonical_path = $path LIMIT 1";
+        command.CommandText = $"SELECT {Columns} FROM projects WHERE canonical_path = $path LIMIT 1";
         command.Parameters.AddWithValue("$path", canonicalPath);
 
         await using var reader = await command.ExecuteReaderAsync(ct);
@@ -106,10 +107,15 @@ public sealed class ProjectRepository : IProjectRepository
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
         using var connection = _db.OpenConnection();
+        using var transaction = connection.BeginTransaction();
         using var command = connection.CreateCommand();
-        command.CommandText = "DELETE FROM projects WHERE id = $id";
+        command.Transaction = transaction;
         command.Parameters.AddWithValue("$id", id.ToString());
+        command.CommandText = "DELETE FROM project_group_members WHERE project_id = $id";
         await command.ExecuteNonQueryAsync(ct);
+        command.CommandText = "DELETE FROM projects WHERE id = $id";
+        await command.ExecuteNonQueryAsync(ct);
+        transaction.Commit();
     }
 
     private static void AddParameters(SqliteCommand command, Project project)

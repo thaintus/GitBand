@@ -11,6 +11,14 @@ public partial class ProjectsView : UserControl
         InitializeComponent();
     }
 
+    private async void OnProjectGroupSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox { DataContext: ProjectItemViewModel item }
+            && DataContext is ProjectsViewModel viewModel
+            && e.AddedItems.OfType<ProjectGroupItemViewModel>().FirstOrDefault() is { } group)
+            await viewModel.SwitchProjectGroupAsync(item, group);
+    }
+
     private async void OnBindingAccountSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (sender is not ComboBox { DataContext: ProjectItemViewModel item }

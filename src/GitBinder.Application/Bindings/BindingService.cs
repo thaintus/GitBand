@@ -16,7 +16,7 @@ namespace GitBinder.Application.Bindings;
 /// 绑定应用服务：负责 Project → Account 一对一绑定、改绑、解绑、测试与状态校验。
 /// 绑定时会将账号身份应用到仓库，并在此之前做配置快照以便回滚。
 /// </summary>
-public sealed class BindingService : IGlobalModeApplier
+public sealed partial class BindingService : IGlobalModeApplier
 {
     private readonly IBindingRepository _repository;
     private readonly IAccountRepository _accountRepository;
@@ -25,6 +25,7 @@ public sealed class BindingService : IGlobalModeApplier
     private readonly IGitService _gitService;
     private readonly IGitConfigApplier _gitConfigApplier;
     private readonly IRepositorySnapshotRepository _snapshotRepository;
+    private readonly IGitTransfer _gitTransfer;
     private readonly EffectiveAccountResolver? _effectiveAccountResolver;
 
     public BindingService(
@@ -35,6 +36,7 @@ public sealed class BindingService : IGlobalModeApplier
         IGitService gitService,
         IGitConfigApplier gitConfigApplier,
         IRepositorySnapshotRepository snapshotRepository,
+        IGitTransfer gitTransfer,
         EffectiveAccountResolver? effectiveAccountResolver = null)
     {
         _repository = repository;
@@ -44,6 +46,7 @@ public sealed class BindingService : IGlobalModeApplier
         _gitService = gitService;
         _gitConfigApplier = gitConfigApplier;
         _snapshotRepository = snapshotRepository;
+        _gitTransfer = gitTransfer;
         _effectiveAccountResolver = effectiveAccountResolver;
     }
 
@@ -129,7 +132,8 @@ public sealed class BindingService : IGlobalModeApplier
                     snapshot.UserEmail,
                     snapshot.SshCommand,
                     snapshot.CredentialHelper,
-                    ct);
+                    ct,
+                    snapshot.EmailConfig);
             }
         }
 
@@ -184,27 +188,37 @@ public sealed class BindingService : IGlobalModeApplier
         Binding binding,
         CancellationToken ct = default)
     {
+        var started = System.Diagnostics.Stopwatch.StartNew();
         var account = await _accountRepository.GetByIdAsync(binding.AccountId, ct);
         var project = await _projectRepository.GetByIdAsync(binding.ProjectId, ct);
         if (account is null || project is null)
         {
-            return new TestRemoteResult { Success = false, Output = "BINDING_INCOMPLETE" };
+            return new TestRemoteResult { Error = new DomainError("BINDING_INCOMPLETE") };
         }
 
-        var effectiveAccount = _effectiveAccountResolver?.Resolve(project) ?? account;
+        var effectiveAccount = _effectiveAccountResolver is null ? account : _effectiveAccountResolver.Resolve(project);
+        if (effectiveAccount is null || !effectiveAccount.Enabled)
+            return new TestRemoteResult { Error = new DomainError("TRANSFER_ACCOUNT_INVALID") };
+
         try
         {
-            // 旧绑定可能尚未写入“禁止凭据回退”的配置；测试前按当前实际生效账号刷新，
-            // 使 SSH/HTTPS 测试也不会意外使用系统已有账号。
-            await ApplyAccountToRepositoryAsync(project, effectiveAccount, ct);
+            // 与实际传输共用指定账号认证，只读检查实际 origin，不持久写入 Git 配置。
+            var result = await _gitTransfer.TestAsync(project.RepositoryPath, effectiveAccount, ct);
+            return new TestRemoteResult
+            {
+                Success = result.IsSuccess,
+                Error = result.Error,
+                Duration = started.Elapsed,
+            };
         }
-        catch (Exception) when (!ct.IsCancellationRequested)
+        catch (Exception)
         {
-            return new TestRemoteResult { Success = false, Output = "BINDING_APPLY_FAILED" };
+            return new TestRemoteResult
+            {
+                Error = new DomainError(ct.IsCancellationRequested ? "TRANSFER_CANCELLED" : "TEST_FAILED"),
+                Duration = started.Elapsed,
+            };
         }
-
-        var sshCommand = BuildSshCommand(project, effectiveAccount);
-        return await _gitService.TestRemoteAsync(project.RepositoryPath, sshCommand, ct);
     }
 
     /// <summary>开启或切换全局模式时，以同一账号重写所有已登记仓库的本地 Git 身份。</summary>
@@ -217,16 +231,69 @@ public sealed class BindingService : IGlobalModeApplier
             binding => _accountRepository.GetByIdAsync(binding.AccountId, ct),
             ct);
 
+    /// <summary>账号编辑后仅同步当前实际使用该账号的绑定仓库，不更改远程地址或认证配置。</summary>
+    public async Task<Result> ReapplyAccountIdentityAsync(Guid accountId, CancellationToken ct = default)
+    {
+        DomainError? firstError = null;
+        foreach (var binding in await _repository.GetAllAsync(ct))
+        {
+            ct.ThrowIfCancellationRequested();
+            var project = await _projectRepository.GetByIdAsync(binding.ProjectId, ct);
+            if (project is null)
+                continue;
+
+            var account = _effectiveAccountResolver is null
+                ? await _accountRepository.GetByIdAsync(binding.AccountId, ct)
+                : _effectiveAccountResolver.Resolve(project);
+            if (account is null || !account.Enabled || account.Id != accountId)
+                continue;
+
+            if (string.IsNullOrWhiteSpace(project.RepositoryPath) || !Directory.Exists(project.RepositoryPath))
+            {
+                firstError ??= new DomainError("PROJECT_REPOSITORY_NOT_FOUND", project.RepositoryPath);
+                continue;
+            }
+
+            try
+            {
+                await EnsureSnapshotAsync(project, ct);
+                await _gitConfigApplier.ApplyIdentityAsync(project.RepositoryPath, account.GitName, account.GitEmail, ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception)
+            {
+                firstError ??= new DomainError("BINDING_APPLY_FAILED", project.RepositoryPath);
+            }
+        }
+
+        return firstError is null ? Result.Success() : Result.Failure(firstError);
+    }
+
     /// <summary>确保仓库已有配置快照（保留最初的原始配置，供解绑时回滚）。</summary>
     private async Task EnsureSnapshotAsync(Project project, CancellationToken ct)
     {
         var existing = await _snapshotRepository.GetByProjectIdAsync(project.Id, ct);
         if (existing is not null)
         {
+            if (existing.EmailConfig is null)
+            {
+                // 旧快照已保存原 user.email；仅补采集此前从未托管的作者/提交者邮箱。
+                // 旧空字符串无法区分缺失与显式空，沿用旧版解绑时删除该键的语义。
+                var current = await _gitConfigApplier.ReadEmailConfigAsync(project.RepositoryPath, ct);
+                existing.EmailConfig = current with
+                {
+                    UserEmail = string.IsNullOrWhiteSpace(existing.UserEmail) ? null : existing.UserEmail,
+                };
+                await _snapshotRepository.SaveAsync(existing, ct);
+            }
             return;
         }
 
         var (name, email) = await _gitConfigApplier.ReadIdentityAsync(project.RepositoryPath, ct);
+        var emailConfig = await _gitConfigApplier.ReadEmailConfigAsync(project.RepositoryPath, ct);
         var sshCommand = await _gitConfigApplier.ReadSshCommandAsync(project.RepositoryPath, ct);
         var credentialHelper = await _gitConfigApplier.ReadCredentialHelperAsync(project.RepositoryPath, ct);
 
@@ -235,6 +302,7 @@ public sealed class BindingService : IGlobalModeApplier
             ProjectId = project.Id,
             UserName = name,
             UserEmail = email,
+            EmailConfig = emailConfig,
             SshCommand = sshCommand,
             CredentialHelper = credentialHelper,
             CapturedAt = DateTimeOffset.UtcNow,
@@ -282,6 +350,7 @@ public sealed class BindingService : IGlobalModeApplier
 
             try
             {
+                await EnsureSnapshotAsync(project, ct);
                 await ApplyAccountToRepositoryAsync(project, account, ct);
             }
             catch (Exception)

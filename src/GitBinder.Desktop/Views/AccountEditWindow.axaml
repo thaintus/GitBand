@@ -4,97 +4,131 @@
         xmlns:loc="using:GitBinder.Desktop.Localization"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="820"
+        mc:Ignorable="d" d:DesignWidth="640" d:DesignHeight="780"
         x:Class="GitBinder.Desktop.Views.AccountEditWindow"
         x:DataType="vm:AccountEditViewModel"
-        Width="640" Height="820"
-        MinWidth="560" MinHeight="660"
-        Background="{DynamicResource AppBackgroundBrush}"
+        Width="640" Height="780"
+        MinWidth="560" MinHeight="620"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Icon="/Assets/avalonia-logo.ico"
+        Background="{DynamicResource SurfaceBrush}"
         Title="{Binding WindowTitle}">
 
     <Grid RowDefinitions="Auto,*,Auto">
-        <StackPanel Grid.Row="0" Margin="28,26,28,22" Spacing="6">
-            <TextBlock Classes="page-title" Text="{Binding WindowTitle}" />
-            <TextBlock Classes="page-description" Text="{loc:Loc Accounts.Edit.Description}" />
-        </StackPanel>
+        <Grid Grid.Row="0" Margin="28,24,28,22" ColumnDefinitions="Auto,*" ColumnSpacing="14">
+            <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource PrimarySoftBrush}"
+                    VerticalAlignment="Top">
+                <Path Width="20" Height="20" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}"
+                      StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Data="M12,3 A4,4 0 1 1 12,11 A4,4 0 1 1 12,3 M4,21 L4,19 C4,15 8,13 12,13 C16,13 20,15 20,19 L20,21" />
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="5">
+                <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"
+                           Text="{Binding WindowTitle}" TextWrapping="Wrap" />
+                <SelectableTextBlock FontSize="12" LineHeight="20" Foreground="{DynamicResource TextSecondaryBrush}"
+                                     Text="{loc:Loc Accounts.Edit.Description}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Grid>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="28,0,28,24" Spacing="16">
-                <!-- 身份、HTTPS 与 SSH 分组展示；认证与保存行为由原命令处理。 -->
-                <Border Classes="card" Padding="22">
-                    <StackPanel Spacing="18">
-                        <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
-                            <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource PrimarySoftBrush}">
-                                <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      Data="M12,3 A4,4 0 1 1 12,11 A4,4 0 1 1 12,3 M4,21 L4,19 C4,15 8,13 12,13 C16,13 20,15 20,19 L20,21" />
-                            </Border>
-                            <TextBlock Grid.Column="1" Classes="section-title" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.Block.GitInfo}" />
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="28,0,28,24" Spacing="12">
+                <!-- 真正需要编辑的字段保留输入控件，说明文字采用可选择正文。 -->
+                <Border Padding="18" CornerRadius="12" Background="{DynamicResource SurfaceMutedBrush}">
+                    <StackPanel Spacing="14">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                            <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}"
+                                  StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"
+                                  Data="M5,4 L19,4 L19,21 L5,21 Z M9,4 L9,2 L15,2 L15,4 M8,10 L16,10 M8,14 L16,14 M8,18 L13,18" />
+                            <TextBlock Grid.Column="1" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"
+                                       Text="{loc:Loc Accounts.Block.GitInfo}" />
                         </Grid>
 
-                        <Grid ColumnDefinitions="128,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="12">
-                            <TextBlock Grid.Row="0" Classes="muted" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.CommitName}" />
-                            <TextBox Grid.Row="0" Grid.Column="1" MinHeight="40" Text="{Binding GitName}" PlaceholderText="{loc:Loc Accounts.CommitNamePlaceholder}" />
+                        <Grid ColumnDefinitions="112,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="10">
+                            <TextBlock Grid.Row="0" Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.CommitName}" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding GitName}"
+                                     PlaceholderText="{loc:Loc Accounts.CommitNamePlaceholder}"
+                                     AutomationProperties.Name="{loc:Loc Accounts.CommitName}" />
 
-                            <TextBlock Grid.Row="1" Classes="muted" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.CommitEmail}" />
-                            <TextBox Grid.Row="1" Grid.Column="1" MinHeight="40" Text="{Binding GitEmail}" PlaceholderText="{loc:Loc Accounts.CommitEmailPlaceholder}" />
+                            <TextBlock Grid.Row="1" Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.CommitEmail}" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding GitEmail}"
+                                     PlaceholderText="{loc:Loc Accounts.CommitEmailPlaceholder}"
+                                     AutomationProperties.Name="{loc:Loc Accounts.CommitEmail}" />
 
-                            <TextBlock Grid.Row="2" Classes="muted" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Common.Alias}" />
-                            <TextBox Grid.Row="2" Grid.Column="1" MinHeight="40" Text="{Binding Alias}" PlaceholderText="{loc:Loc Accounts.AliasDefaultToName}" />
+                            <TextBlock Grid.Row="2" Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Common.Alias}" />
+                            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Alias}"
+                                     PlaceholderText="{loc:Loc Accounts.AliasDefaultToName}"
+                                     AutomationProperties.Name="{loc:Loc Common.Alias}" />
 
-                            <TextBlock Grid.Row="3" Classes="muted" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Common.Platform}" />
-                            <ComboBox Grid.Row="3" Grid.Column="1" MinHeight="40" HorizontalAlignment="Stretch"
-                                      ItemsSource="{Binding Platforms}" SelectedItem="{Binding SelectedPlatform}" />
+                            <TextBlock Grid.Row="3" Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Common.Platform}" />
+                            <ComboBox Grid.Row="3" Grid.Column="1" HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding Platforms}" SelectedItem="{Binding SelectedPlatform}"
+                                      AutomationProperties.Name="{loc:Loc Common.Platform}" />
                         </Grid>
+                        <SelectableTextBlock FontSize="12" LineHeight="20" Foreground="{DynamicResource TextSecondaryBrush}"
+                                             Text="{loc:Loc Accounts.CommitEmailHint}" TextWrapping="Wrap" />
                     </StackPanel>
                 </Border>
 
-                <Border Classes="card" Padding="22">
-                    <StackPanel Spacing="16">
-                        <StackPanel Spacing="10">
-                            <Grid ColumnDefinitions="34,*" ColumnSpacing="12">
-                                <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SuccessSoftBrush}">
-                                    <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource SuccessBrush}" StrokeThickness="1.7"
-                                          HorizontalAlignment="Center" VerticalAlignment="Center"
-                                          Data="M6,10 L6,7 A6,6 0 0 1 18,7 L18,10 M4,10 L20,10 L20,22 L4,22 Z M12,14 L12,18" />
-                                </Border>
-                                <TextBlock Grid.Column="1" Classes="section-title" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.Block.Https}" />
+                <Border Padding="18" CornerRadius="12" Background="{DynamicResource SurfaceMutedBrush}">
+                    <StackPanel Spacing="14">
+                        <StackPanel Spacing="7">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}"
+                                      StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"
+                                      Data="M6,10 L6,7 A6,6 0 0 1 18,7 L18,10 M4,10 L20,10 L20,22 L4,22 Z M12,14 L12,18" />
+                                <TextBlock Grid.Column="1" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"
+                                           Text="{loc:Loc Accounts.Block.Https}" />
                             </Grid>
-                            <TextBlock Classes="caption" Text="{loc:Loc Accounts.Block.Https.Hint}" TextWrapping="Wrap" />
+                            <SelectableTextBlock FontSize="12" LineHeight="20" Foreground="{DynamicResource TextSecondaryBrush}"
+                                                 Text="{loc:Loc Accounts.Block.Https.Hint}" TextWrapping="Wrap" />
                         </StackPanel>
 
-                        <Grid ColumnDefinitions="128,*" RowDefinitions="Auto,Auto" RowSpacing="12">
-                            <TextBlock Grid.Row="0" Classes="muted" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.HttpsUsernameLabel}" />
-                            <TextBox Grid.Row="0" Grid.Column="1" MinHeight="40" Text="{Binding HttpsUsername}" PlaceholderText="{loc:Loc Accounts.HttpsUsernamePlaceholder}" />
+                        <Grid ColumnDefinitions="112,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="10">
+                            <TextBlock Grid.Row="0" Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.HttpsUsernameLabel}" />
+                            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding HttpsUsername}"
+                                     PlaceholderText="{loc:Loc Accounts.HttpsUsernamePlaceholder}"
+                                     AutomationProperties.Name="{loc:Loc Accounts.HttpsUsernameLabel}" />
 
-                            <TextBlock Grid.Row="1" Classes="muted" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.Credential}" />
-                            <TextBox Grid.Row="1" Grid.Column="1" MinHeight="40" Text="{Binding HttpsCredential}" PasswordChar="*" PlaceholderText="{loc:Loc Accounts.HttpsCredentialPlaceholder}" />
+                            <TextBlock Grid.Row="1" Classes="caption" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.Credential}" />
+                            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding HttpsCredential}" PasswordChar="*"
+                                     PlaceholderText="{loc:Loc Accounts.HttpsCredentialPlaceholder}"
+                                     AutomationProperties.Name="{loc:Loc Accounts.Credential}" />
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <Border Classes="card">
+                <Border CornerRadius="12" Background="{DynamicResource SurfaceMutedBrush}">
                     <Grid>
-                        <StackPanel Margin="22" Spacing="16">
-                            <StackPanel Spacing="10">
-                                <Grid ColumnDefinitions="34,*" ColumnSpacing="12" Margin="0,0,24,0">
-                                    <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource WarningSoftBrush}">
-                                        <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource WarningBrush}" StrokeThickness="1.7"
-                                              HorizontalAlignment="Center" VerticalAlignment="Center"
-                                              Data="M14,3 A6,6 0 1 1 10,13 L3,20 L3,23 L6,23 L6,20 L9,20 L9,17 L12,14 M17,7 L17,7.1" />
-                                    </Border>
-                                    <TextBlock Grid.Column="1" Classes="section-title" VerticalAlignment="Center" TextWrapping="Wrap" Text="{loc:Loc Accounts.Block.Ssh}" />
+                        <StackPanel Margin="18" Spacing="14">
+                            <StackPanel Spacing="7">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,24,0">
+                                    <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}"
+                                          StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"
+                                          Data="M14,3 A6,6 0 1 1 10,13 L3,20 L3,23 L6,23 L6,20 L9,20 L9,17 L12,14 M17,7 L17,7.1" />
+                                    <TextBlock Grid.Column="1" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap"
+                                               Text="{loc:Loc Accounts.Block.Ssh}" />
                                 </Grid>
-                                <TextBlock Classes="caption" Text="{loc:Loc Accounts.Block.Ssh.Hint}" TextWrapping="Wrap" />
+                                <SelectableTextBlock FontSize="12" LineHeight="20" Foreground="{DynamicResource TextSecondaryBrush}"
+                                                     Text="{loc:Loc Accounts.Block.Ssh.Hint}" TextWrapping="Wrap" />
                             </StackPanel>
 
-                            <Border Classes="inset">
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                                    <Button Content="{loc:Loc Accounts.UploadKey}" Command="{Binding UploadKeyCommand}" Classes="secondary" MinHeight="40" />
-                                    <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding SshKeyFileName}"
-                                               Foreground="{DynamicResource SuccessBrush}" FontWeight="Medium" TextWrapping="Wrap" />
-                                </Grid>
-                            </Border>
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Button Command="{Binding UploadKeyCommand}" Classes="secondary"
+                                        AutomationProperties.Name="{loc:Loc Accounts.UploadKey}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Path Classes="action-glyph"
+                                              Data="M12,16 L12,3 M7,8 L12,3 L17,8 M4,14 L4,21 L20,21 L20,14" />
+                                        <TextBlock Text="{loc:Loc Accounts.UploadKey}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding SshKeyFileName}"
+                                           ToolTip.Tip="{Binding SshKeyFileName}" TextTrimming="CharacterEllipsis"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" />
+                            </Grid>
                         </StackPanel>
                         <Button Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Content="×"
                                 ToolTip.Tip="{loc:Loc Accounts.ClearKey}" Command="{Binding ClearKeyCommand}"
@@ -105,15 +139,12 @@
             </StackPanel>
         </ScrollViewer>
 
-        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,1,0,0" Padding="28,18">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="20">
-                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" VerticalAlignment="Center" />
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-                    <Button Content="{loc:Loc Common.Cancel}" MinWidth="96" MinHeight="40" Click="OnCancelClick" Classes="secondary" />
-                    <Button Content="{loc:Loc Common.Save}" MinWidth="104" MinHeight="40" Command="{Binding SaveCommand}" Classes="primary" />
-                </StackPanel>
-            </Grid>
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceMutedBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0" Padding="28,16">
+            <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                <Button Content="{loc:Loc Common.Cancel}" MinWidth="80" MinHeight="36" Click="OnCancelClick" Classes="ghost" />
+                <Button Content="{loc:Loc Common.Save}" MinWidth="92" MinHeight="36" Command="{Binding SaveCommand}" Classes="primary" />
+            </StackPanel>
         </Border>
     </Grid>
 </Window>

@@ -8,29 +8,36 @@
              x:Class="GitBinder.Desktop.Views.AccountsView"
              x:DataType="vm:AccountsViewModel">
 
-    <Grid Margin="32,28" RowDefinitions="Auto,Auto,*,Auto">
+    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
-            <StackPanel Spacing="7">
+            <StackPanel Spacing="5">
                 <TextBlock Classes="page-title" Text="{loc:Loc Nav.Accounts}" />
                 <TextBlock Classes="page-description" Text="{loc:Loc Accounts.Description}" />
             </StackPanel>
-            <Button Grid.Column="1" Content="{loc:Loc Accounts.New}" Command="{Binding AddCommand}" Classes="primary" VerticalAlignment="Center" />
+            <Button Grid.Column="1" Command="{Binding AddCommand}" Classes="primary" VerticalAlignment="Center"
+                    AutomationProperties.Name="{loc:Loc Accounts.New}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Path Classes="action-glyph" Data="M12,5 V19 M5,12 H19" />
+                    <TextBlock Text="{loc:Loc Accounts.New}" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="0,24,0,0" ColumnDefinitions="*,Auto" ColumnSpacing="8">
-            <Grid>
-                <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         PlaceholderText="{loc:Loc Accounts.SearchPlaceholder}"
-                         AutomationProperties.Name="{loc:Loc Accounts.SearchPlaceholder}" Padding="38,9,12,9" />
-                <Path Width="16" Height="16" Margin="14,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
-                      Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.7"
-                      IsHitTestVisible="False" Data="M10,2 A8,8 0 1 1 10,18 A8,8 0 1 1 10,2 M16,16 L22,22" />
-            </Grid>
-            <Button Grid.Column="1" Content="{loc:Loc Common.Search.Clear}" Command="{Binding ClearSearchCommand}"
-                    Classes="ghost" IsVisible="{Binding HasSearchText}" VerticalAlignment="Center" />
+        <Grid Grid.Row="1" Margin="0,18,0,0">
+            <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                     PlaceholderText="{loc:Loc Accounts.SearchPlaceholder}"
+                     AutomationProperties.Name="{loc:Loc Accounts.SearchPlaceholder}" Padding="38,9,40,9" />
+            <Path Width="16" Height="16" Margin="14,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                  Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.7"
+                  IsHitTestVisible="False" Data="M10,2 A8,8 0 1 1 10,18 A8,8 0 1 1 10,2 M16,16 L22,22" />
+            <Button Command="{Binding ClearSearchCommand}" Classes="ghost icon-action small"
+                    IsVisible="{Binding HasSearchText}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0"
+                    ToolTip.Tip="{loc:Loc Common.Search.Clear}" AutomationProperties.Name="{loc:Loc Common.Search.Clear}">
+                <Path Classes="action-glyph" Data="M6,6 L18,18 M18,6 L6,18" />
+            </Button>
         </Grid>
 
-        <ScrollViewer Grid.Row="2" Margin="0,16,0,0" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="2" Margin="0,14,0,0" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <Border Classes="card" Padding="32" IsVisible="{Binding !HasItems}">
                     <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="360">
@@ -51,32 +58,36 @@
                 <ItemsControl ItemsSource="{Binding FilteredItems}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Classes="card" Margin="0,0,0,12">
+                            <Border Classes="card list-card" Margin="0,0,0,10">
                                 <Grid>
-                                    <Grid Margin="22,24,44,24" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
-                                        <Border Width="46" Height="46" CornerRadius="14" Background="{DynamicResource PrimarySoftBrush}" VerticalAlignment="Top">
-                                            <Path Width="22" Height="22" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.6"
+                                    <Grid Margin="16,18,44,18" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource PrimarySoftBrush}" VerticalAlignment="Center">
+                                            <Path Width="19" Height="19" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
                                                   Data="M12,3 A4,4 0 1 1 12,11 A4,4 0 1 1 12,3 M4,22 V19 A7,7 0 0 1 11,12 H13 A7,7 0 0 1 20,19 V22" />
                                         </Border>
-                                        <StackPanel Grid.Column="1" Spacing="8">
-                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10" HorizontalAlignment="Left">
+                                        <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                                                 <TextBlock Classes="section-title" Text="{Binding DisplayAlias}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip.Tip="{Binding DisplayAlias}" />
                                                 <Border Grid.Column="1" Classes="badge badge-warning" IsVisible="{Binding IsDefault}" VerticalAlignment="Center">
                                                     <TextBlock Text="{loc:Loc Accounts.Default}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource WarningBrush}" />
                                                 </Border>
                                             </Grid>
-                                            <WrapPanel>
-                                                <Border Classes="badge" Margin="0,0,10,4" MaxWidth="260">
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                                <Border Classes="badge" MaxWidth="180" Padding="6,2">
                                                     <TextBlock Classes="caption" Text="{Binding PlatformText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PlatformText}" />
                                                 </Border>
-                                                <TextBlock Classes="caption" Margin="0,4,0,4" Text="{Binding EmailText}" TextWrapping="Wrap" />
-                                            </WrapPanel>
+                                                <TextBlock Grid.Column="1" Classes="caption" Text="{Binding EmailText}" VerticalAlignment="Center"
+                                                           TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EmailText}" />
+                                            </Grid>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                             <Button Content="{loc:Loc Accounts.SetDefault}" Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).SetDefaultCommand}"
-                                                    CommandParameter="{Binding}" Classes="ghost" />
-                                            <Button Content="{loc:Loc Accounts.Edit}" Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).EditCommand}"
-                                                    CommandParameter="{Binding}" Classes="secondary" />
+                                                    CommandParameter="{Binding}" Classes="ghost compact" />
+                                            <Button Command="{Binding $parent[ItemsControl].((vm:AccountsViewModel)DataContext).EditCommand}"
+                                                    CommandParameter="{Binding}" Classes="secondary icon-action"
+                                                    ToolTip.Tip="{loc:Loc Accounts.Edit}" AutomationProperties.Name="{loc:Loc Accounts.Edit}">
+                                                <Path Classes="action-glyph" Data="M14,5 L19,10 M3,21 L8,20 L21,7 A2,2 0 0 0 17,3 L4,16 Z" />
+                                            </Button>
                                         </StackPanel>
                                     </Grid>
                                     <Button Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Content="×"
@@ -92,6 +103,5 @@
 
             </StackPanel>
         </ScrollViewer>
-        <TextBlock Grid.Row="3" Margin="0,12,0,0" Text="{Binding Feedback}" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" />
     </Grid>
 </UserControl>

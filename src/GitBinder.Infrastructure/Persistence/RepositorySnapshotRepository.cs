@@ -1,3 +1,4 @@
+using System.Text.Json;
 using GitBinder.Application.GlobalMode;
 using GitBinder.Domain.GlobalMode;
 using Microsoft.Data.Sqlite;
@@ -9,6 +10,11 @@ namespace GitBinder.Infrastructure.Persistence;
 /// </summary>
 public sealed class RepositorySnapshotRepository : IRepositorySnapshotRepository
 {
+    private static readonly JsonSerializerOptions EmailConfigJsonOptions = new()
+    {
+        RespectRequiredConstructorParameters = true,
+    };
+
     private readonly DatabaseContext _db;
 
     public RepositorySnapshotRepository(DatabaseContext db) => _db = db;
@@ -17,7 +23,11 @@ public sealed class RepositorySnapshotRepository : IRepositorySnapshotRepository
     {
         using var connection = _db.OpenConnection();
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT * FROM repository_snapshots WHERE project_id = $project_id LIMIT 1";
+        command.CommandText = """
+            SELECT id, project_id, user_name, user_email, ssh_command,
+                   credential_helper, credential_use_http_path, captured_at, email_config_json
+            FROM repository_snapshots WHERE project_id = $project_id LIMIT 1
+            """;
         command.Parameters.AddWithValue("$project_id", projectId.ToString());
 
         await using var reader = await command.ExecuteReaderAsync(ct);
@@ -36,10 +46,10 @@ public sealed class RepositorySnapshotRepository : IRepositorySnapshotRepository
         command.CommandText = """
             INSERT INTO repository_snapshots (
                 id, project_id, user_name, user_email, ssh_command,
-                credential_helper, credential_use_http_path, captured_at
+                credential_helper, credential_use_http_path, captured_at, email_config_json
             ) VALUES (
                 $id, $project_id, $user_name, $user_email, $ssh_command,
-                $credential_helper, $credential_use_http_path, $captured_at
+                $credential_helper, $credential_use_http_path, $captured_at, $email_config_json
             )
             ON CONFLICT(project_id) DO UPDATE SET
                 user_name = excluded.user_name,
@@ -47,7 +57,8 @@ public sealed class RepositorySnapshotRepository : IRepositorySnapshotRepository
                 ssh_command = excluded.ssh_command,
                 credential_helper = excluded.credential_helper,
                 credential_use_http_path = excluded.credential_use_http_path,
-                captured_at = excluded.captured_at
+                captured_at = excluded.captured_at,
+                email_config_json = excluded.email_config_json
             """;
         command.Parameters.AddWithValue("$id", snapshot.Id.ToString());
         command.Parameters.AddWithValue("$project_id", snapshot.ProjectId.ToString());
@@ -57,6 +68,9 @@ public sealed class RepositorySnapshotRepository : IRepositorySnapshotRepository
         command.Parameters.AddWithValue("$credential_helper", snapshot.CredentialHelper);
         command.Parameters.AddWithValue("$credential_use_http_path", snapshot.CredentialUseHttpPath ? 1 : 0);
         command.Parameters.AddWithValue("$captured_at", snapshot.CapturedAt.ToString("O"));
+        command.Parameters.AddWithValue("$email_config_json", snapshot.EmailConfig is null
+            ? DBNull.Value
+            : (object)JsonSerializer.Serialize(snapshot.EmailConfig, EmailConfigJsonOptions));
         await command.ExecuteNonQueryAsync(ct);
     }
 
@@ -81,6 +95,14 @@ public sealed class RepositorySnapshotRepository : IRepositorySnapshotRepository
             CredentialHelper = reader.GetString(5),
             CredentialUseHttpPath = reader.GetInt32(6) == 1,
             CapturedAt = DateTimeOffset.Parse(reader.GetString(7)),
+            EmailConfig = reader.IsDBNull(8) ? null : DeserializeEmailConfig(reader.GetString(8)),
         };
+    }
+
+    private static GitEmailConfigSnapshot DeserializeEmailConfig(string json)
+    {
+        // 非空 JSON 必须包含完整快照；损坏或缺项时阻止恢复，避免把未知状态当成未配置。
+        return JsonSerializer.Deserialize<GitEmailConfigSnapshot>(json, EmailConfigJsonOptions)
+            ?? throw new JsonException("邮箱配置快照内容无效。");
     }
 }

@@ -1,3 +1,5 @@
+using GitBinder.Domain.GlobalMode;
+
 namespace GitBinder.Application.Git;
 
 /// <summary>
@@ -8,6 +10,9 @@ public interface IGitConfigApplier
 {
     /// <summary>读取当前仓库用户身份。</summary>
     Task<(string Name, string Email)> ReadIdentityAsync(string repositoryPath, CancellationToken ct = default);
+
+    /// <summary>读取仓库本地三个邮箱配置项，保留缺失与显式空值的区别。</summary>
+    Task<GitEmailConfigSnapshot> ReadEmailConfigAsync(string repositoryPath, CancellationToken ct = default);
 
     /// <summary>读取当前仓库 SSH Command。</summary>
     Task<string> ReadSshCommandAsync(string repositoryPath, CancellationToken ct = default);
@@ -44,5 +49,6 @@ public interface IGitConfigApplier
         string? email,
         string? sshCommand,
         string? credentialHelper,
-        CancellationToken ct = default);
+        CancellationToken ct = default,
+        GitEmailConfigSnapshot? emailConfig = null);
 }

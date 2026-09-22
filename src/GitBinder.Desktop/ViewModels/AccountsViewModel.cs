@@ -42,8 +42,12 @@ public partial class AccountsViewModel : ViewModelBase
     [ObservableProperty]
     private AccountItemViewModel? _selectedItem;
 
-    [ObservableProperty]
     private string _feedback = string.Empty;
+    public string Feedback
+    {
+        get => _feedback;
+        set => SetNotice(ref _feedback, value);
+    }
 
     public AccountsViewModel(
         IAccountRepository repository,
@@ -129,7 +133,7 @@ public partial class AccountsViewModel : ViewModelBase
             var result = owner is null
                 ? await window.ShowDialog<bool?>(window)
                 : await window.ShowDialog<bool?>(owner);
-            if (result is true)
+            if (result is true || editor.HasPersistedChanges)
             {
                 await LoadAsync();
             }

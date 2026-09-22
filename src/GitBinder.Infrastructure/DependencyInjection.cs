@@ -30,6 +30,7 @@ public static class DependencyInjection
         // 仓储。
         services.AddSingleton<IAccountRepository, AccountRepository>();
         services.AddSingleton<IProjectRepository, ProjectRepository>();
+        services.AddSingleton<IProjectGroupRepository, ProjectGroupRepository>();
         services.AddSingleton<IBindingRepository, BindingRepository>();
         services.AddSingleton<ISettingsRepository, SettingsRepository>();
         services.AddSingleton<IRepositorySnapshotRepository, RepositorySnapshotRepository>();
@@ -38,6 +39,7 @@ public static class DependencyInjection
         // Git。
         services.AddSingleton<IGitLocator, GitLocator>();
         services.AddSingleton<GitService>();
+        services.AddSingleton<IGitTransfer, GitTransfer>();
         services.AddSingleton<IGitService>(sp => sp.GetRequiredService<GitService>());
         services.AddSingleton<GitConfigApplier>();
         services.AddSingleton<IGitConfigApplier>(sp => sp.GetRequiredService<GitConfigApplier>());
@@ -68,6 +70,38 @@ public sealed class DatabaseInitializer
         MigrateAccountsPlatform();
         MigratePlatformsSortOrder();
         MigratePlatformsEnabled();
+        MigrateProjectGroups();
+        MigrateRepositoryEmailConfigSnapshot();
+    }
+
+    /// <summary>旧快照仅补可空邮箱 JSON 列，保留旧 user_email 及原始快照内容。</summary>
+    private void MigrateRepositoryEmailConfigSnapshot()
+    {
+        using var connection = _db.OpenConnection();
+        if (!TableExists(connection, "repository_snapshots") ||
+            ColumnExists(connection, "repository_snapshots", "email_config_json"))
+        {
+            return;
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "ALTER TABLE repository_snapshots ADD COLUMN email_config_json TEXT NULL";
+        command.ExecuteNonQuery();
+    }
+
+    /// <summary>分组表只增不改，兼容旧库且可重复执行。</summary>
+    private void MigrateProjectGroups()
+    {
+        using var connection = _db.OpenConnection();
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            CREATE TABLE IF NOT EXISTS project_groups (id TEXT PRIMARY KEY, name TEXT NOT NULL COLLATE NOCASE UNIQUE);
+            CREATE TABLE IF NOT EXISTS project_group_members (
+                project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+                group_id TEXT NOT NULL REFERENCES project_groups(id) ON DELETE CASCADE);
+            CREATE INDEX IF NOT EXISTS idx_project_group_members_group_id ON project_group_members(group_id);
+            """;
+        command.ExecuteNonQuery();
     }
 
     /// <summary>

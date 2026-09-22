@@ -19,9 +19,20 @@ public sealed class CommandResult
 /// </summary>
 public interface ICommandExecutor
 {
+    /// <summary>带子进程专用环境和超时的执行；不支持时失败，不能静默丢弃认证隔离选项。</summary>
+    Task<CommandResult> ExecuteWithOptionsAsync(string executable, IReadOnlyList<string> arguments,
+        string? workingDirectory, CommandExecutionOptions options, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException("Process options are not supported.");
+
     Task<CommandResult> ExecuteAsync(
         string executable,
         IReadOnlyList<string> arguments,
         string? workingDirectory = null,
         CancellationToken cancellationToken = default);
+}
+
+public sealed class CommandExecutionOptions
+{
+    public TimeSpan Timeout { get; init; } = TimeSpan.FromMinutes(30);
+    public IReadOnlyDictionary<string, string?> Environment { get; init; } = new Dictionary<string, string?>();
 }

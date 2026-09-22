@@ -61,6 +61,10 @@ public sealed class EffectiveAccountResolver
         return _accountReader.GetDefault();
     }
 
+    /// <summary>克隆前尚无项目绑定：全局模式优先，否则使用用户明确选择的账号。</summary>
+    public Account? ResolveForClone(Account selectedAccount)
+        => _globalModeState.IsEnabled ? Resolve(null) : selectedAccount;
+
     /// <summary>解析原因描述码，供 GUI 展示 Status。</summary>
     public EffectiveReason ResolveReason(Project? project)
     {

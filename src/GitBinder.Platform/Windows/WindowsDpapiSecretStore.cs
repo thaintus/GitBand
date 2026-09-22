@@ -21,8 +21,9 @@ public sealed class WindowsDpapiSecretStore : ISecretStore
 
     public Task SetAsync(string key, string value, CancellationToken ct = default)
     {
-        Directory.CreateDirectory(_storageDirectory);
         var path = GetPath(key);
+        // SecretId 包含账号层级，首次保存时必须创建密文文件的完整父目录。
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
         var plainBytes = Encoding.UTF8.GetBytes(value);
         var protectedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);

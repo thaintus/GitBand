@@ -29,11 +29,16 @@ public sealed class SshLocator : ISshLocator
 
         // 常见 OpenSSH 安装目录。
         var systemRoot = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-        var candidates = new[]
+        var candidates = new List<string>();
+        if (!string.IsNullOrEmpty(systemRoot))
         {
-            Path.Combine(systemRoot, "System32", "OpenSSH", "ssh.exe"),
-            @"C:\Program Files\Git\usr\bin\ssh.exe",
-        };
+            candidates.Add(Path.Combine(systemRoot, "System32", "OpenSSH", "ssh.exe"));
+        }
+        var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        if (!string.IsNullOrEmpty(programFiles))
+        {
+            candidates.Add(Path.Combine(programFiles, "Git", "usr", "bin", "ssh.exe"));
+        }
 
         foreach (var candidate in candidates)
         {

@@ -39,7 +39,7 @@ public sealed class ProjectService
         => _repository.GetByIdAsync(id, ct);
 
     /// <summary>添加仓库：校验 Git 仓库、解析 Remote。</summary>
-    public async Task<Result<Project>> AddAsync(string path, CancellationToken ct = default)
+    public async Task<Result<Project>> AddAsync(string path, CancellationToken ct = default, bool bindDefaultAccount = true)
     {
         if (string.IsNullOrWhiteSpace(path))
         {
@@ -84,7 +84,7 @@ public sealed class ProjectService
 
         // RULE 03：新项目默认绑定 Default Account。
         var defaultAccount = await _accountRepository.GetDefaultAsync(ct);
-        if (defaultAccount is not null)
+        if (bindDefaultAccount && defaultAccount is not null)
         {
             await _bindingService.BindAsync(project.Id, defaultAccount.Id, ct);
         }
@@ -151,6 +151,104 @@ public sealed class ProjectService
         await _repository.UpdateAsync(project, ct);
         return Result<Project>.Success(project);
     }
+
+    /// <summary>读取本地 origin 并同步缓存，不联网、不修改 Git 配置；失败时保留原记录。</summary>
+    public async Task<Result<Project>> RefreshMetadataAsync(Guid id, CancellationToken ct = default)
+    {
+        try
+        {
+            var project = await _repository.GetByIdAsync(id, ct);
+            if (project is null)
+                return Result<Project>.Failure(new DomainError("PROJECT_NOT_FOUND"));
+            if (!await _gitService.ValidateRepositoryAsync(project.RepositoryPath, ct))
+                return Result<Project>.Failure(new DomainError("PROJECT_REPOSITORY_NOT_FOUND", project.RepositoryPath));
+
+            var origin = await _gitService.GetOriginUrlAsync(project.RepositoryPath, ct);
+            if (origin is null)
+                return Result<Project>.Failure(new DomainError("PROJECT_METADATA_READ_FAILED"));
+            if (HasHttpUserInfo(origin))
+                return Result<Project>.Failure(new DomainError("PROJECT_REMOTE_CREDENTIAL_FORBIDDEN"));
+            var (protocol, host) = _gitService.ParseRemote(origin);
+            if (project.OriginUrl == origin && project.RemoteProtocol == protocol && project.RemoteHost == host)
+                return Result<Project>.Success(project);
+
+            var updated = CopyProject(project);
+            updated.OriginUrl = origin;
+            updated.RemoteProtocol = protocol;
+            updated.RemoteHost = host;
+            updated.UpdatedAt = DateTimeOffset.UtcNow;
+            await _repository.UpdateAsync(updated, ct);
+            return Result<Project>.Success(updated);
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return Result<Project>.Failure(new DomainError("PROJECT_METADATA_READ_FAILED"));
+        }
+    }
+
+    /// <summary>重新定位已移动的同一仓库。只更新登记，保留 ID、绑定和原配置快照，不搬移文件。</summary>
+    public async Task<Result<Project>> UpdatePathAsync(Guid id, string path, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return Result<Project>.Failure(new DomainError("PROJECT_PATH_REQUIRED"));
+        if (!Path.IsPathFullyQualified(path.Trim()))
+            return Result<Project>.Failure(new DomainError("PROJECT_PATH_ABSOLUTE_REQUIRED"));
+
+        try
+        {
+            var project = await _repository.GetByIdAsync(id, ct);
+            if (project is null)
+                return Result<Project>.Failure(new DomainError("PROJECT_NOT_FOUND"));
+            var canonical = _pathNormalizer.Canonicalize(path.Trim());
+            if (!await _gitService.ValidateRepositoryAsync(canonical, ct))
+                return Result<Project>.Failure(new DomainError("PROJECT_REPOSITORY_NOT_FOUND", canonical));
+
+            var root = await _gitService.GetRepositoryRootAsync(canonical, ct);
+            if (string.IsNullOrWhiteSpace(root))
+                return Result<Project>.Failure(new DomainError("PROJECT_METADATA_READ_FAILED"));
+            var rootKey = _pathNormalizer.Canonicalize(root);
+            // 必须按实际仓库根去重，不能通过选择子目录绕过重复检查。
+            var projects = await _repository.GetAllAsync(ct);
+            if (projects.Any(other => other.Id != id && _pathNormalizer.Equals(other.RepositoryPath, rootKey)))
+                return Result<Project>.Failure(new DomainError("PROJECT_ALREADY_EXISTS", root));
+
+            var gitDir = await _gitService.GetGitDirAsync(root, ct);
+            var origin = await _gitService.GetOriginUrlAsync(root, ct);
+            var branch = await _gitService.GetCurrentBranchAsync(root, ct);
+            if (string.IsNullOrWhiteSpace(gitDir) || origin is null || branch is null)
+                return Result<Project>.Failure(new DomainError("PROJECT_METADATA_READ_FAILED"));
+            if (HasHttpUserInfo(origin))
+                return Result<Project>.Failure(new DomainError("PROJECT_REMOTE_CREDENTIAL_FORBIDDEN"));
+
+            var updated = CopyProject(project);
+            updated.RepositoryPath = root;
+            updated.CanonicalPath = rootKey;
+            updated.GitDir = gitDir;
+            updated.OriginUrl = origin;
+            (updated.RemoteProtocol, updated.RemoteHost) = _gitService.ParseRemote(origin);
+            updated.CurrentBranch = branch;
+            updated.LastTestResult = string.Empty;
+            updated.LastTestAt = null;
+            updated.UpdatedAt = DateTimeOffset.UtcNow;
+            await _repository.UpdateAsync(updated, ct);
+            return Result<Project>.Success(updated);
+        }
+        catch (Exception) when (!ct.IsCancellationRequested)
+        {
+            return Result<Project>.Failure(new DomainError("PROJECT_PATH_UPDATE_FAILED"));
+        }
+    }
+
+    private static Project CopyProject(Project project) => new()
+    {
+        Id = project.Id, Name = project.Name,
+        RepositoryPath = project.RepositoryPath, CanonicalPath = project.CanonicalPath,
+        GitDir = project.GitDir, OriginUrl = project.OriginUrl,
+        RemoteProtocol = project.RemoteProtocol, RemoteHost = project.RemoteHost,
+        CurrentBranch = project.CurrentBranch,
+        LastTestResult = project.LastTestResult, LastTestAt = project.LastTestAt,
+        CreatedAt = project.CreatedAt, UpdatedAt = project.UpdatedAt,
+    };
 
     private static bool HasHttpUserInfo(string originUrl)
     {

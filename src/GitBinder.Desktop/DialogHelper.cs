@@ -16,6 +16,38 @@ public delegate Task<string?> DirectoryPickerDelegate();
 /// </summary>
 public static class DialogHelper
 {
+    private static readonly SemaphoreSlim NoticeQueue = new(1, 1);
+
+    /// <summary>由操作所属窗口承载通知；串行显示，避免弹窗叠加或错误弹在账号编辑窗口后面。</summary>
+    public static void Notify(string message, object source)
+    {
+        if (string.IsNullOrWhiteSpace(message)
+            || Avalonia.Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime) return;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() => _ = ShowNoticeAsync(message, source));
+    }
+
+    private static async Task ShowNoticeAsync(string message, object source)
+    {
+        await NoticeQueue.WaitAsync();
+        try
+        {
+            if (Avalonia.Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop) return;
+            var owner = desktop.Windows.FirstOrDefault(w => w.DataContext == source && w.IsVisible)
+                ?? desktop.Windows.LastOrDefault(w => w.IsActive && w is not MessageDialog)
+                ?? desktop.MainWindow;
+            if (owner is null) return;
+            if (!owner.IsVisible) owner.Show();
+            if (owner.WindowState == global::Avalonia.Controls.WindowState.Minimized)
+                owner.WindowState = global::Avalonia.Controls.WindowState.Normal;
+            await new MessageDialog(message).ShowDialog(owner);
+        }
+        catch (Exception)
+        {
+            // 退出过程中窗口可能已关闭；不能让通知异常导致应用崩溃。
+        }
+        finally { NoticeQueue.Release(); }
+    }
+
     private static global::Avalonia.Controls.Window? GetTopLevel()
     {
         if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -85,5 +117,14 @@ public static class DialogHelper
 
         var dialog = new ConfirmationDialog(title, message, confirmText);
         return await dialog.ShowDialog<bool?>(owner) is true;
+    }
+
+    /// <summary>编辑分组名称；保存回调返回错误文案时保留弹窗，取消不会调用保存。</summary>
+    public static async Task<bool> EditProjectGroupAsync(
+        string title, string initialName, Func<string, Task<string?>> save)
+    {
+        var owner = GetTopLevel();
+        if (owner is null) return false;
+        return await new GroupEditDialog(title, initialName, save).ShowDialog<bool?>(owner) is true;
     }
 }

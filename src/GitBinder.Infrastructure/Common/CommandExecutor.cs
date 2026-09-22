@@ -16,11 +16,19 @@ public sealed class CommandExecutor : ICommandExecutor
         _defaultTimeout = defaultTimeout ?? TimeSpan.FromSeconds(60);
     }
 
-    public async Task<CommandResult> ExecuteAsync(
+    public Task<CommandResult> ExecuteAsync(
         string executable,
         IReadOnlyList<string> arguments,
         string? workingDirectory = null,
         CancellationToken cancellationToken = default)
+        => ExecuteCoreAsync(executable, arguments, workingDirectory, null, cancellationToken);
+
+    public Task<CommandResult> ExecuteWithOptionsAsync(string executable, IReadOnlyList<string> arguments,
+        string? workingDirectory, CommandExecutionOptions options, CancellationToken cancellationToken = default)
+        => ExecuteCoreAsync(executable, arguments, workingDirectory, options, cancellationToken);
+
+    private async Task<CommandResult> ExecuteCoreAsync(string executable, IReadOnlyList<string> arguments,
+        string? workingDirectory, CommandExecutionOptions? options, CancellationToken cancellationToken)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -38,6 +46,14 @@ public sealed class CommandExecutor : ICommandExecutor
         foreach (var arg in arguments)
         {
             startInfo.ArgumentList.Add(arg);
+        }
+        if (options is not null)
+        {
+            foreach (var pair in options.Environment)
+            {
+                if (pair.Value is null) startInfo.Environment.Remove(pair.Key);
+                else startInfo.Environment[pair.Key] = pair.Value;
+            }
         }
 
         using var process = new Process { StartInfo = startInfo };
@@ -72,9 +88,10 @@ public sealed class CommandExecutor : ICommandExecutor
 
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
+            process.StandardInput.Close();
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(_defaultTimeout);
+            timeoutCts.CancelAfter(options?.Timeout ?? _defaultTimeout);
 
             await process.WaitForExitAsync(timeoutCts.Token);
 

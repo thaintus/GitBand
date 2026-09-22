@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS repository_snapshots (
     project_id              TEXT NOT NULL UNIQUE,
     user_name               TEXT NOT NULL DEFAULT '',  -- 原 user.name
     user_email              TEXT NOT NULL DEFAULT '',  -- 原 user.email
+    email_config_json       TEXT NULL,                 -- 完整邮箱快照 JSON，NULL 表示旧快照；字段 null/空串分别表示未配置/显式留空
     ssh_command             TEXT NOT NULL DEFAULT '',  -- 原 core.sshCommand
     credential_helper       TEXT NOT NULL DEFAULT '',  -- 原 credential.helper
     credential_use_http_path INTEGER NOT NULL DEFAULT 0,
@@ -103,3 +104,14 @@ CREATE TABLE IF NOT EXISTS operation_logs (
 -- 索引
 CREATE INDEX IF NOT EXISTS idx_projects_canonical_path ON projects(canonical_path);
 CREATE INDEX IF NOT EXISTS idx_bindings_account_id ON bindings(account_id);
+
+-- 项目分组：只新增表；已有项目默认为未分组，不改动路径、绑定或 Git 配置。
+CREATE TABLE IF NOT EXISTS project_groups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL COLLATE NOCASE UNIQUE
+);
+CREATE TABLE IF NOT EXISTS project_group_members (
+    project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+    group_id TEXT NOT NULL REFERENCES project_groups(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_project_group_members_group_id ON project_group_members(group_id);

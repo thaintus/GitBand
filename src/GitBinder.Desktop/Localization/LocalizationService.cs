@@ -91,8 +91,9 @@ public sealed class LocalizationService : ILocalizationService, INotifyPropertyC
         }
 
         CultureChanged?.Invoke(this, EventArgs.Empty);
-        // 通知所有索引器绑定刷新。
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
+        // Avalonia 的反射索引器绑定按 CLR 属性名 Item 判断刷新，不使用 WPF 的 Item[]。
+        // 通知真实属性名，确保已创建的窗口文案也随语言切换更新。
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item"));
         return Task.CompletedTask;
     }
 }

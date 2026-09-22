@@ -1,0 +1,36 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:GitBinder.Desktop.Localization"
+        x:Class="GitBinder.Desktop.Views.MessageDialog"
+        Width="580" MinWidth="420" MinHeight="240" MaxHeight="680" SizeToContent="Height"
+        CanResize="True"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{DynamicResource SurfaceBrush}" Title="{loc:Loc Notice.Title}"
+        Icon="/Assets/avalonia-logo.ico" KeyDown="OnKeyDown">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Grid Margin="28,24,28,0" ColumnDefinitions="Auto,*" ColumnSpacing="14">
+            <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource PrimarySoftBrush}">
+                <Path Width="20" Height="20" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Data="M12,3 A9,9 0 1 1 12,21 A9,9 0 1 1 12,3 M12,11 L12,17 M12,7 L12,8" />
+            </Border>
+            <TextBlock Grid.Column="1" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextPrimaryBrush}" Text="{loc:Loc Notice.Title}" />
+        </Grid>
+        <ScrollViewer Grid.Row="1" Margin="28,20,20,24" MaxHeight="400" VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <SelectableTextBlock x:Name="MessageText" Margin="0,0,8,0" FontSize="14" LineHeight="24"
+                                 Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" Focusable="True"
+                                 SelectionBrush="{DynamicResource PrimaryBrush}" SelectionForegroundBrush="{DynamicResource OnPrimaryBrush}"
+                                 AutomationProperties.Name="{loc:Loc Notice.Content}" />
+        </ScrollViewer>
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceMutedBrush}" Padding="28,16">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                <TextBlock FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center"
+                           Text="{loc:Loc Notice.SelectToCopy}" TextWrapping="Wrap" />
+                <Button Grid.Column="1" MinWidth="88" MinHeight="36" Content="{loc:Loc Notice.Close}"
+                        Click="OnCloseClick" Classes="primary" IsDefault="True" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

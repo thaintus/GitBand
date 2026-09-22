@@ -3,6 +3,7 @@ using GitBinder.Application.Git;
 using GitBinder.Application.GlobalMode;
 using GitBinder.Domain.Accounts;
 using GitBinder.Domain.Common;
+using GitBinder.Domain.GlobalMode;
 using GitBinder.Infrastructure.Common;
 
 namespace GitBinder.Infrastructure.Git;
@@ -28,6 +29,9 @@ public sealed class GitConfigApplier : IGitConfigApplier, IGlobalGitConfigApplie
         return (name, email);
     }
 
+    public Task<GitEmailConfigSnapshot> ReadEmailConfigAsync(string repositoryPath, CancellationToken ct = default)
+        => ReadEmailConfigAsync("--local", repositoryPath, ct);
+
     public async Task<string> ReadSshCommandAsync(string repositoryPath, CancellationToken ct = default)
         => await ReadConfigAsync(repositoryPath, "core.sshCommand", ct);
 
@@ -40,10 +44,13 @@ public sealed class GitConfigApplier : IGitConfigApplier, IGlobalGitConfigApplie
         string gitEmail,
         CancellationToken ct = default)
     {
-        // 账号切换必须覆盖完整身份。可选字段为空时需移除旧账号遗留的本地配置，
-        // 否则新账号会继续使用旧 user.email。
         await WriteLocalConfigAsync(repositoryPath, "user.name", gitName, ct);
-        await WriteLocalConfigAsync(repositoryPath, "user.email", gitEmail, ct);
+        // 显式空值阻断低优先级邮箱；author/committer 的独立配置也必须随账号一起覆盖。
+        var email = NormalizeAccountEmail(gitEmail);
+        foreach (var key in EmailConfigKeys)
+        {
+            await WriteLocalConfigValueAsync(repositoryPath, key, email, ct);
+        }
     }
 
     public async Task ApplySshCommandAsync(
@@ -75,10 +82,29 @@ public sealed class GitConfigApplier : IGitConfigApplier, IGlobalGitConfigApplie
         string? email,
         string? sshCommand,
         string? credentialHelper,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        GitEmailConfigSnapshot? emailConfig = null)
     {
         await RestoreKeyAsync(repositoryPath, "user.name", name, ct);
-        await RestoreKeyAsync(repositoryPath, "user.email", email, ct);
+        if (emailConfig is null)
+        {
+            // 旧快照没有独立邮箱配置，保留其恢复语义，避免覆盖未记录的配置。
+            await RestoreKeyAsync(repositoryPath, "user.email", email, ct);
+        }
+        else
+        {
+            foreach (var (key, value) in GetEmailConfigValues(emailConfig))
+            {
+                if (value is null)
+                {
+                    await WriteLocalConfigAsync(repositoryPath, key, null, ct);
+                }
+                else
+                {
+                    await WriteLocalConfigValueAsync(repositoryPath, key, value, ct);
+                }
+            }
+        }
         await RestoreKeyAsync(repositoryPath, "core.sshCommand", sshCommand, ct);
         await RestoreKeyAsync(repositoryPath, "credential.helper", credentialHelper, ct);
     }
@@ -86,10 +112,10 @@ public sealed class GitConfigApplier : IGitConfigApplier, IGlobalGitConfigApplie
     public async Task<GlobalGitConfigSnapshot> CaptureAsync(CancellationToken ct = default)
     {
         var name = await ReadGlobalConfigAsync("user.name", ct);
-        var email = await ReadGlobalConfigAsync("user.email", ct);
+        var emailConfig = await ReadEmailConfigAsync("--global", null, ct);
         var sshCommand = await ReadGlobalConfigAsync("core.sshCommand", ct);
         var credentialHelpers = await ReadGlobalConfigValuesAsync("credential.helper", ct);
-        return new GlobalGitConfigSnapshot(name, email, sshCommand, credentialHelpers);
+        return new GlobalGitConfigSnapshot(name, emailConfig.UserEmail, sshCommand, credentialHelpers, emailConfig);
     }
 
     public async Task<Result> ApplyAsync(Account account, CancellationToken ct = default)
@@ -100,10 +126,14 @@ public sealed class GitConfigApplier : IGitConfigApplier, IGlobalGitConfigApplie
             return name;
         }
 
-        var email = await WriteGlobalConfigAsync("user.email", account.GitEmail, ct);
-        if (!email.IsSuccess)
+        var emailValue = NormalizeAccountEmail(account.GitEmail);
+        foreach (var key in EmailConfigKeys)
         {
-            return email;
+            var email = await WriteGlobalConfigValueAsync(key, emailValue, ct);
+            if (!email.IsSuccess)
+            {
+                return email;
+            }
         }
 
         var sshCommand = account.AuthenticationType is AuthenticationType.Ssh or AuthenticationType.Both
@@ -131,10 +161,19 @@ public sealed class GitConfigApplier : IGitConfigApplier, IGlobalGitConfigApplie
             return name;
         }
 
-        var email = await WriteGlobalConfigAsync("user.email", snapshot.UserEmail, ct);
-        if (!email.IsSuccess)
+        // 旧全局快照已能区分 null 与空串，恢复时也须保留显式空邮箱。
+        var emailValues = snapshot.EmailConfig is null
+            ? new (string Key, string? Value)[] { ("user.email", snapshot.UserEmail) }
+            : GetEmailConfigValues(snapshot.EmailConfig);
+        foreach (var (key, value) in emailValues)
         {
-            return email;
+            var email = value is null
+                ? await WriteGlobalConfigAsync(key, null, ct)
+                : await WriteGlobalConfigValueAsync(key, value, ct);
+            if (!email.IsSuccess)
+            {
+                return email;
+            }
         }
 
         var ssh = await WriteGlobalConfigAsync("core.sshCommand", snapshot.SshCommand, ct);
@@ -152,6 +191,46 @@ public sealed class GitConfigApplier : IGitConfigApplier, IGlobalGitConfigApplie
         var result = await _executor.ExecuteAsync(git, ["config", "--local", "--get", key], repositoryPath, ct);
         return result.IsSuccess ? result.StdOut.Trim() : string.Empty;
     }
+
+    private async Task<GitEmailConfigSnapshot> ReadEmailConfigAsync(
+        string scope,
+        string? repositoryPath,
+        CancellationToken ct)
+    {
+        var userEmail = await ReadEmailConfigValueAsync(scope, repositoryPath, "user.email", ct);
+        var authorEmail = await ReadEmailConfigValueAsync(scope, repositoryPath, "author.email", ct);
+        var committerEmail = await ReadEmailConfigValueAsync(scope, repositoryPath, "committer.email", ct);
+        return new GitEmailConfigSnapshot(userEmail, authorEmail, committerEmail);
+    }
+
+    private async Task<string?> ReadEmailConfigValueAsync(
+        string scope,
+        string? repositoryPath,
+        string key,
+        CancellationToken ct)
+    {
+        var git = await ResolveGitAsync(ct);
+        var result = await _executor.ExecuteAsync(git, ["config", scope, "--get", key], repositoryPath, ct);
+        if (result.IsSuccess)
+        {
+            // 仅去掉 Git 输出的行尾，保留空值和原配置中的空白。
+            return result.StdOut.TrimEnd('\r', '\n');
+        }
+
+        if (result.ExitCode == 1)
+        {
+            return null;
+        }
+
+        throw new InvalidOperationException($"Failed to read Git config '{key}' ({scope}, exit code {result.ExitCode}).");
+    }
+
+    private static string NormalizeAccountEmail(string? email) => email?.Trim() ?? string.Empty;
+
+    private static readonly string[] EmailConfigKeys = ["user.email", "author.email", "committer.email"];
+
+    private static (string Key, string? Value)[] GetEmailConfigValues(GitEmailConfigSnapshot snapshot)
+        => [("user.email", snapshot.UserEmail), ("author.email", snapshot.AuthorEmail), ("committer.email", snapshot.CommitterEmail)];
 
     private async Task<string?> ReadGlobalConfigAsync(string key, CancellationToken ct)
     {

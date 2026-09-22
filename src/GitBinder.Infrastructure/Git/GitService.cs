@@ -58,8 +58,14 @@ public sealed class GitLocator : IGitLocator
 
     private static IEnumerable<string> CommonLocations()
     {
-        yield return @"C:\Program Files\Git\cmd\git.exe";
-        yield return @"C:\Program Files (x86)\Git\cmd\git.exe";
+        foreach (var folder in new[] { Environment.SpecialFolder.ProgramFiles, Environment.SpecialFolder.ProgramFilesX86 })
+        {
+            var programFiles = Environment.GetFolderPath(folder);
+            if (!string.IsNullOrEmpty(programFiles))
+            {
+                yield return Path.Combine(programFiles, "Git", "cmd", "git.exe");
+            }
+        }
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (!string.IsNullOrEmpty(localAppData))
         {
@@ -124,7 +130,42 @@ public sealed class GitService : IGitService
     {
         var git = await ResolveGitAsync(ct);
         var result = await _executor.ExecuteAsync(git, ["remote", "get-url", "origin"], path, ct);
-        return result.IsSuccess ? result.StdOut.Trim() : null;
+        if (result.IsSuccess)
+            return result.StdOut.Trim();
+
+        // 区分未配置 origin（空字符串）与 Git 读取失败（null），避免错误覆盖缓存。
+        var configured = await _executor.ExecuteAsync(git, ["config", "--get", "remote.origin.url"], path, ct);
+        return configured.ExitCode == 1 ? string.Empty : null;
+    }
+
+    public async Task<string?> GetTransferOriginUrlAsync(string path, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        var git = await ResolveGitAsync(ct);
+        var options = GitTransfer.BaseOptions(timeout: TimeSpan.FromSeconds(60));
+        var result = await _executor.ExecuteWithOptionsAsync(git,
+            [.. GitTransfer.BaseArguments(), "remote", "get-url", "origin"], path, options, ct);
+        ct.ThrowIfCancellationRequested();
+        if (result.IsSuccess) return result.StdOut.Trim();
+
+        // 不能继承全局 insteadOf 或 GIT_DIR：预览、确认和实际传输必须看到同一 origin。
+        var configured = await _executor.ExecuteWithOptionsAsync(git,
+            [.. GitTransfer.BaseArguments(), "config", "--get", "remote.origin.url"], path, options, ct);
+        ct.ThrowIfCancellationRequested();
+        return configured.ExitCode == 1 ? string.Empty : null;
+    }
+
+    public async Task<Result> SetTransferOriginUrlAsync(string path, string originUrl, CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        var git = await ResolveGitAsync(ct);
+        // set-url 对缺失 origin 自行失败，禁止把预览期间消失的远程重新新增回来。
+        var result = await _executor.ExecuteWithOptionsAsync(git,
+            [.. GitTransfer.BaseArguments(), "remote", "set-url", "origin", originUrl], path,
+            GitTransfer.BaseOptions(timeout: TimeSpan.FromSeconds(60)), ct);
+        ct.ThrowIfCancellationRequested();
+        return result.IsSuccess ? Result.Success()
+            : Result.Failure(new DomainError("PROJECT_REMOTE_UPDATE_FAILED", path));
     }
 
     public async Task<Result> SetOriginUrlAsync(string path, string originUrl, CancellationToken ct = default)
@@ -196,34 +237,6 @@ public sealed class GitService : IGitService
         }
 
         return (RemoteProtocol.Unknown, string.Empty);
-    }
-
-    public async Task<TestRemoteResult> TestRemoteAsync(
-        string repositoryPath,
-        string? sshCommand,
-        CancellationToken ct = default)
-    {
-        var start = DateTimeOffset.UtcNow;
-        var git = await ResolveGitAsync(ct);
-
-        var args = new List<string>();
-        if (!string.IsNullOrWhiteSpace(sshCommand))
-        {
-            args.Add("-c");
-            args.Add($"core.sshCommand={sshCommand}");
-        }
-
-        args.Add("ls-remote");
-        args.Add("origin");
-
-        var result = await _executor.ExecuteAsync(git, args, repositoryPath, ct);
-        return new TestRemoteResult
-        {
-            Success = result.IsSuccess,
-            ExitCode = result.ExitCode,
-            Output = result.IsSuccess ? result.StdOut : result.StdErr,
-            Duration = DateTimeOffset.UtcNow - start,
-        };
     }
 
     public async Task<string?> GetGitVersionAsync(CancellationToken ct = default)

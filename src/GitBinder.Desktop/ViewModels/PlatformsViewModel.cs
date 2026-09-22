@@ -33,8 +33,12 @@ public partial class PlatformsViewModel : ViewModelBase
 
     public bool HasNoMatches => HasItems && FilteredItems.Count == 0;
 
-    [ObservableProperty]
     private string _feedback = string.Empty;
+    public string Feedback
+    {
+        get => _feedback;
+        set => SetNotice(ref _feedback, value);
+    }
 
     // 编辑表单字段。
     [ObservableProperty]

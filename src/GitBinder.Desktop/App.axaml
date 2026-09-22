@@ -9,6 +9,7 @@
         <SolidColorBrush x:Key="SurfaceMutedBrush" Color="#F6F8FC" />
         <SolidColorBrush x:Key="SurfaceStrongBrush" Color="#EDF0FF" />
         <SolidColorBrush x:Key="BorderBrush" Color="#E2E7F0" />
+        <SolidColorBrush x:Key="CardHoverBorderBrush" Color="#C9D2EA" />
         <SolidColorBrush x:Key="TextPrimaryBrush" Color="#1D293F" />
         <SolidColorBrush x:Key="TextSecondaryBrush" Color="#617087" />
         <SolidColorBrush x:Key="TextTertiaryBrush" Color="#7B889C" />

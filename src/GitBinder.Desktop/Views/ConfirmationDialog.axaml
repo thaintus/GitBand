@@ -1,39 +1,41 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:GitBinder.Desktop.Views"
+        xmlns:loc="using:GitBinder.Desktop.Localization"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="260"
         x:Class="GitBinder.Desktop.Views.ConfirmationDialog"
         x:DataType="local:ConfirmationDialog"
-        Width="460" MinHeight="260" MaxHeight="520" SizeToContent="Height"
+        Width="500" MinWidth="380" MinHeight="240" MaxHeight="560" SizeToContent="Height"
         CanResize="False" ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource AppBackgroundBrush}"
+        Background="{DynamicResource SurfaceBrush}"
+        Icon="/Assets/avalonia-logo.ico"
         KeyDown="OnKeyDown"
         Title="{Binding Title}">
 
-    <Grid RowDefinitions="*,Auto">
-        <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="28" Spacing="16">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="14">
-                    <Border Width="44" Height="44" CornerRadius="14" Background="{DynamicResource DangerSoftBrush}">
-                        <Path Width="22" Height="22" Stretch="Uniform" Stroke="{DynamicResource DangerBrush}" StrokeThickness="1.6"
-                              HorizontalAlignment="Center" VerticalAlignment="Center"
-                              Data="M3,6 L21,6 M9,6 L9,3 L15,3 L15,6 M5,6 L6,21 L18,21 L19,6 M10,10 L10,17 M14,10 L14,17" />
-                    </Border>
-                    <TextBlock Grid.Column="1" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"
-                               Text="{Binding Title}" VerticalAlignment="Center" TextWrapping="Wrap" />
-                </Grid>
-                <TextBlock FontSize="14" LineHeight="23" Foreground="{DynamicResource TextSecondaryBrush}"
-                           Text="{Binding Message}" TextWrapping="Wrap" />
-            </StackPanel>
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Grid Margin="28,24,28,0" ColumnDefinitions="Auto,*" ColumnSpacing="14">
+            <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource WarningSoftBrush}" VerticalAlignment="Top">
+                <Path Width="20" Height="20" Stretch="Uniform" Stroke="{DynamicResource WarningBrush}" StrokeThickness="1.7"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Data="M12,3 A9,9 0 1 1 12,21 A9,9 0 1 1 12,3 M12,7 L12,13 M12,16 L12,17" />
+            </Border>
+            <TextBlock Grid.Column="1" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"
+                       Text="{Binding Title}" VerticalAlignment="Center" TextWrapping="Wrap" />
+        </Grid>
+        <ScrollViewer Grid.Row="1" Margin="28,20,20,24" MaxHeight="300"
+                      HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <SelectableTextBlock Margin="0,0,8,0" FontSize="14" LineHeight="24" Foreground="{DynamicResource TextSecondaryBrush}"
+                                 Text="{Binding Message}" TextWrapping="Wrap" Focusable="True"
+                                 SelectionBrush="{DynamicResource PrimaryBrush}" SelectionForegroundBrush="{DynamicResource OnPrimaryBrush}"
+                                 AutomationProperties.Name="{loc:Loc Notice.Content}" />
         </ScrollViewer>
-        <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,1,0,0" Padding="28,18">
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceMutedBrush}" Padding="28,16">
             <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
-                <Button MinWidth="96" MinHeight="40" Content="{Binding CancelText}" Click="OnCancelClick" Classes="secondary" IsDefault="True" />
-                <Button MinWidth="104" MinHeight="40" Content="{Binding ConfirmText}" Click="OnConfirmClick" Classes="danger" />
+                <Button MinWidth="88" MinHeight="36" Content="{Binding CancelText}" Click="OnCancelClick" Classes="secondary" IsDefault="True" />
+                <Button MinWidth="96" MinHeight="36" Content="{Binding ConfirmText}" Click="OnConfirmClick" Classes="danger" />
             </StackPanel>
         </Border>
     </Grid>

@@ -9,99 +9,91 @@
              x:DataType="vm:DashboardViewModel">
 
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="32,28" Spacing="24" MaxWidth="1120">
-            <StackPanel Spacing="6">
+        <StackPanel Margin="28,24" Spacing="14">
+            <StackPanel Spacing="5" Margin="0,0,0,4">
                 <TextBlock Classes="page-title" Text="{loc:Loc Dashboard.Title}" />
                 <TextBlock Classes="page-description" Text="{loc:Loc Dashboard.Description}" />
             </StackPanel>
 
-            <Border Background="{DynamicResource HeroBackgroundBrush}" CornerRadius="18" Padding="28">
-                <Grid ColumnDefinitions="*,116" ColumnSpacing="28">
-                    <StackPanel Spacing="12" VerticalAlignment="Center">
-                        <TextBlock FontSize="11" FontWeight="SemiBold" LetterSpacing="1.5"
-                                   Foreground="{DynamicResource NavigationTextBrush}" Opacity="0.75"
-                                   Text="{loc:Loc Dashboard.Hero.Kicker}" TextWrapping="Wrap" />
-                        <TextBlock FontSize="24" FontWeight="SemiBold" Foreground="{DynamicResource SurfaceBrush}"
-                                   Text="{loc:Loc Dashboard.Hero.Title}" TextWrapping="Wrap" />
-                        <TextBlock FontSize="13" LineHeight="21" Foreground="{DynamicResource NavigationTextBrush}"
-                                   Text="{loc:Loc Dashboard.Hero.Body}" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <Border Grid.Column="1" Width="116" Height="116" CornerRadius="28"
-                            Background="{DynamicResource NavigationBrush}" VerticalAlignment="Center">
-                        <Grid>
-                            <Path Data="M 36,28 L 36,88 M 36,67 C 36,48 80,68 80,44 L 80,28"
-                                  Stroke="{DynamicResource NavigationTextBrush}" StrokeThickness="2"
-                                  Opacity="0.65" />
-                            <Border Width="18" Height="18" CornerRadius="9" Margin="27,19,0,0"
-                                    HorizontalAlignment="Left" VerticalAlignment="Top"
-                                    Background="{DynamicResource PrimaryBrush}" BorderBrush="{DynamicResource NavigationBrush}" BorderThickness="4" />
-                            <Border Width="18" Height="18" CornerRadius="9" Margin="71,19,0,0"
-                                    HorizontalAlignment="Left" VerticalAlignment="Top"
-                                    Background="{DynamicResource SuccessBrush}" BorderBrush="{DynamicResource NavigationBrush}" BorderThickness="4" />
-                            <Border Width="18" Height="18" CornerRadius="9" Margin="27,79,0,0"
-                                    HorizontalAlignment="Left" VerticalAlignment="Top"
-                                    Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource NavigationBrush}" BorderThickness="4" />
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+                <Border Grid.Column="0" Classes="card" Padding="16">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" MinHeight="32">
+                            <TextBlock Classes="caption" Text="{loc:Loc Dashboard.AccountCount}"
+                                       VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <Border Grid.Column="1" Width="30" Height="30" CornerRadius="8" Background="{DynamicResource PrimarySoftBrush}">
+                                <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M16,7 A4,4 0 1 1 8,7 A4,4 0 1 1 16,7 Z M4,21 V19 A5,5 0 0 1 9,14 H15 A5,5 0 0 1 20,19 V21" />
+                            </Border>
                         </Grid>
+                        <TextBlock Grid.Row="1" Height="38" FontSize="30" FontWeight="SemiBold" Text="{Binding AccountCount}" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="1" Classes="card" Padding="16">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" MinHeight="32">
+                            <TextBlock Classes="caption" Text="{loc:Loc Dashboard.ProjectCount}"
+                                       VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <Border Grid.Column="1" Width="30" Height="30" CornerRadius="8" Background="{DynamicResource SuccessSoftBrush}">
+                                <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource SuccessBrush}" StrokeThickness="1.7"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M3,5 H9 L12,8 H21 V20 H3 Z M3,11 H21" />
+                            </Border>
+                        </Grid>
+                        <TextBlock Grid.Row="1" Height="38" FontSize="30" FontWeight="SemiBold" Text="{Binding ProjectCount}" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="2" Classes="card" Padding="16">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" MinHeight="32">
+                            <TextBlock Classes="caption" Text="{loc:Loc Dashboard.BindingCount}"
+                                       VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <Border Grid.Column="1" Width="30" Height="30" CornerRadius="8" Background="{DynamicResource WarningSoftBrush}">
+                                <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource WarningBrush}" StrokeThickness="1.7"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M10,13 A4,4 0 0 0 16,13 L20,9 A4,4 0 0 0 14,3 L11,6 M14,11 A4,4 0 0 0 8,11 L4,15 A4,4 0 0 0 10,21 L13,18" />
+                            </Border>
+                        </Grid>
+                        <TextBlock Grid.Row="1" Height="38" FontSize="30" FontWeight="SemiBold" Text="{Binding BindingCount}" />
+                    </Grid>
+                </Border>
+                <Border Grid.Column="3" Classes="card" Padding="16">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="12">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" MinHeight="32">
+                            <TextBlock Classes="caption" Text="{loc:Loc Dashboard.DefaultAccountLabel}"
+                                       VerticalAlignment="Center" TextWrapping="Wrap" />
+                            <Border Grid.Column="1" Width="30" Height="30" CornerRadius="8" Background="{DynamicResource PrimarySoftBrush}">
+                                <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                                      Data="M12,3 L15,9 L22,10 L17,15 L18,22 L12,19 L6,22 L7,15 L2,10 L9,9 Z" />
+                            </Border>
+                        </Grid>
+                        <TextBlock Grid.Row="1" Height="38" FontSize="18" FontWeight="SemiBold" Padding="0,8,0,0"
+                                   Text="{Binding DefaultAccountAlias}" TextTrimming="CharacterEllipsis"
+                                   ToolTip.Tip="{Binding DefaultAccountAlias}" />
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Classes="card" Padding="22,20">
+                <Grid ColumnDefinitions="*,64" ColumnSpacing="24">
+                    <StackPanel Spacing="8">
+                        <TextBlock FontSize="11" FontWeight="SemiBold" LetterSpacing="1"
+                                   Foreground="{DynamicResource PrimaryBrush}" Text="{loc:Loc Dashboard.Hero.Kicker}" />
+                        <TextBlock FontSize="20" FontWeight="SemiBold" Text="{loc:Loc Dashboard.Hero.Title}" TextWrapping="Wrap" />
+                        <SelectableTextBlock FontSize="13" LineHeight="21" Foreground="{DynamicResource TextSecondaryBrush}"
+                                             Text="{loc:Loc Dashboard.Hero.Body}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Border Grid.Column="1" Width="64" Height="64" CornerRadius="18"
+                            Background="{DynamicResource PrimarySoftBrush}" VerticalAlignment="Center">
+                        <Path Width="32" Height="36" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}"
+                              StrokeThickness="1.7" StrokeLineCap="Round" StrokeJoin="Round"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Data="M6,7 V21 M6,15 C6,10 18,15 18,7 M9,4 A3,3 0 1 1 3,4 A3,3 0 1 1 9,4 Z M21,4 A3,3 0 1 1 15,4 A3,3 0 1 1 21,4 Z M9,24 A3,3 0 1 1 3,24 A3,3 0 1 1 9,24 Z" />
                     </Border>
                 </Grid>
             </Border>
-
-            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="14">
-                <Border Grid.Column="0" Classes="card" Padding="20">
-                    <StackPanel Spacing="16">
-                        <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource PrimarySoftBrush}" HorizontalAlignment="Left">
-                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M 16,7 A 4,4 0 1 1 8,7 A 4,4 0 1 1 16,7 Z M 4,21 L 4,19 A 5,5 0 0 1 9,14 L 15,14 A 5,5 0 0 1 20,19 L 20,21" />
-                        </Border>
-                        <StackPanel Spacing="4">
-                            <TextBlock Height="38" FontSize="30" FontWeight="SemiBold" Text="{Binding AccountCount}" />
-                            <TextBlock Classes="muted" FontSize="12" Text="{loc:Loc Dashboard.AccountCount}" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="1" Classes="card" Padding="20">
-                    <StackPanel Spacing="16">
-                        <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource SuccessSoftBrush}" HorizontalAlignment="Left">
-                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource SuccessBrush}" StrokeThickness="1.7"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M 3,5 L 9,5 L 12,8 L 21,8 L 21,20 L 3,20 Z M 3,11 L 21,11" />
-                        </Border>
-                        <StackPanel Spacing="4">
-                            <TextBlock Height="38" FontSize="30" FontWeight="SemiBold" Text="{Binding ProjectCount}" />
-                            <TextBlock Classes="muted" FontSize="12" Text="{loc:Loc Dashboard.ProjectCount}" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="2" Classes="card" Padding="20">
-                    <StackPanel Spacing="16">
-                        <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource WarningSoftBrush}" HorizontalAlignment="Left">
-                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource WarningBrush}" StrokeThickness="1.7"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M 10,13 A 4,4 0 0 0 16,13 L 20,9 A 4,4 0 0 0 14,3 L 11,6 M 14,11 A 4,4 0 0 0 8,11 L 4,15 A 4,4 0 0 0 10,21 L 13,18" />
-                        </Border>
-                        <StackPanel Spacing="4">
-                            <TextBlock Height="38" FontSize="30" FontWeight="SemiBold" Text="{Binding BindingCount}" />
-                            <TextBlock Classes="muted" FontSize="12" Text="{loc:Loc Dashboard.BindingCount}" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="3" Classes="card" Padding="20">
-                    <StackPanel Spacing="16">
-                        <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource PrimarySoftBrush}" HorizontalAlignment="Left">
-                            <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.7"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center"
-                                  Data="M 12,3 L 15,9 L 22,10 L 17,15 L 18,22 L 12,19 L 6,22 L 7,15 L 2,10 L 9,9 Z" />
-                        </Border>
-                        <StackPanel Spacing="4">
-                            <TextBlock Height="38" FontSize="21" FontWeight="SemiBold" Padding="0,6,0,0"
-                                       Text="{Binding DefaultAccountAlias}" TextTrimming="CharacterEllipsis"
-                                       ToolTip.Tip="{Binding DefaultAccountAlias}" />
-                            <TextBlock Classes="muted" FontSize="12" Text="{loc:Loc Dashboard.DefaultAccountLabel}" TextWrapping="Wrap" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-            </Grid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

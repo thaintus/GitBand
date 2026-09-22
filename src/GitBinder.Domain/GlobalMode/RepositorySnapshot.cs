@@ -15,6 +15,9 @@ public sealed class RepositorySnapshot
 
     public string UserEmail { get; set; } = string.Empty;
 
+    /// <summary>完整邮箱配置；null 表示旧版本快照，字段 null 与空字符串分别表示未配置与显式留空。</summary>
+    public GitEmailConfigSnapshot? EmailConfig { get; set; }
+
     public string SshCommand { get; set; } = string.Empty;
 
     public string CredentialHelper { get; set; } = string.Empty;
