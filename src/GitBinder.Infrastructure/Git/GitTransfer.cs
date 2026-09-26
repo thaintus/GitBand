@@ -74,16 +74,14 @@ public sealed class GitTransfer(ICommandExecutor executor, IGitLocator locator, 
             if (!Directory.Exists(repositoryPath)) return Fail("PROJECT_REPOSITORY_NOT_FOUND", repositoryPath);
             var git = await locator.LocateAsync(ct);
             if (string.IsNullOrWhiteSpace(git)) return Fail("TRANSFER_GIT_MISSING");
-            // 全部检查在写入之前完成；不 stash，不 reset，不自动生成 merge commit。
+            // 拉取前只检查仓库操作状态与跟踪分支；本地改动是否冲突由 Git 快进更新判断。
+            // 不 stash，不 reset，不自动生成 merge commit。
             async Task<CommandResult> Read(params string[] args)
             {
                 stage = "git " + args[0];
                 var options = BaseOptions();
                 return await executor.ExecuteWithOptionsAsync(git, [.. BaseArguments(), .. args], repositoryPath, options, ct);
             }
-            var status = await Read("status", "--porcelain", "--untracked-files=normal");
-            if (!status.IsSuccess) return GitTransferFailure.FromCommand(stage, status, ct);
-            if (!string.IsNullOrWhiteSpace(status.StdOut)) return Fail("PULL_DIRTY");
             foreach (var marker in new[] { "MERGE_HEAD", "CHERRY_PICK_HEAD", "REVERT_HEAD", "rebase-merge", "rebase-apply" })
             {
                 var state = await Read("rev-parse", "--git-path", marker);

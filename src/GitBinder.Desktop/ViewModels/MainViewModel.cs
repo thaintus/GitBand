@@ -29,7 +29,10 @@ public partial class MainViewModel : ViewModelBase
     public ObservableCollection<Account> Accounts { get; } = [];
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSettingsSelected))]
     private ViewModelBase _currentPage = null!;
+
+    public bool IsSettingsSelected => ReferenceEquals(CurrentPage, _settings);
 
     [ObservableProperty]
     private NavItem? _selectedNav;
@@ -89,9 +92,8 @@ public partial class MainViewModel : ViewModelBase
     {
         NavigationItems.Add(new NavItem("Nav.Dashboard", _dashboard));
         NavigationItems.Add(new NavItem("Nav.Accounts", _accounts));
-        NavigationItems.Add(new NavItem("Nav.Projects", _projects));
         NavigationItems.Add(new NavItem("Nav.Platforms", _platforms));
-        NavigationItems.Add(new NavItem("Nav.Settings", _settings));
+        NavigationItems.Add(new NavItem("Nav.Projects", _projects));
     }
 
     private void RefreshLocalization()
@@ -111,6 +113,14 @@ public partial class MainViewModel : ViewModelBase
             CurrentPage = value.Page;
             _ = LoadPageAsync(value.Page);
         }
+    }
+
+    [RelayCommand]
+    private async Task OpenSettingsAsync()
+    {
+        SelectedNav = null;
+        CurrentPage = _settings;
+        await LoadPageAsync(_settings);
     }
 
     /// <summary>导航切换后即时加载该页面的数据，避免升级或首次进入时看到空列表。</summary>

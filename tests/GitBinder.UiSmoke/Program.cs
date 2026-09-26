@@ -1,0 +1,255 @@
+using System.Diagnostics;
+using System.Globalization;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using GitBinder.Desktop;
+using GitBinder.Desktop.Views;
+
+namespace GitBinder.UiSmoke;
+
+internal static class Program
+{
+    [STAThread]
+    public static int Main(string[] args)
+    {
+        SmokeApp.ScreenshotsOnly = args.Contains("--screenshots-only");
+        SmokeApp.OutputDirectory = Path.GetFullPath(args.FirstOrDefault(arg => arg != "--screenshots-only") ?? Path.Combine("tests", "GitBinder.UiSmoke", "artifacts"));
+        Directory.CreateDirectory(SmokeApp.OutputDirectory);
+        Trace.Listeners.Add(new TextWriterTraceListener(Path.Combine(SmokeApp.OutputDirectory, "avalonia.log")));
+        Trace.AutoFlush = true;
+        return AppBuilder.Configure<SmokeApp>().UsePlatformDetect().WithInterFont().LogToTrace()
+            .StartWithClassicDesktopLifetime([], ShutdownMode.OnExplicitShutdown);
+    }
+}
+
+// 继承真实 App.Initialize 加载已编译 XAML、资源、控件模板；绝不调用 App 的启动/组合根。
+public sealed class SmokeApp : App
+{
+    public static string OutputDirectory { get; set; } = string.Empty;
+    public static bool ScreenshotsOnly { get; set; }
+    private readonly List<string> _checks = [];
+    private IClassicDesktopStyleApplicationLifetime _desktop = null!;
+    private MainWindow _window = null!;
+    private SmokeFixture _fixture = null!;
+
+    public override void OnFrameworkInitializationCompleted()
+    {
+        // 故意不调用 base：base 会初始化真实数据库、托盘和真实 Git 配置。
+        _desktop = (IClassicDesktopStyleApplicationLifetime)ApplicationLifetime!;
+        Dispatcher.UIThread.Post(async () => await RunAsync());
+    }
+
+    private async Task RunAsync()
+    {
+        var exitCode = 0;
+        try
+        {
+            Check(App.Services is null, "启动未调用真实 CompositionRoot");
+            _fixture = new SmokeFixture(OutputDirectory);
+            await _fixture.LoadAsync();
+            _window = new MainWindow { DataContext = _fixture.Main, Width = 1180, Height = 780, ShowInTaskbar = false };
+            _desktop.MainWindow = _window;
+            _window.Show();
+            await SettleAsync();
+            var tagline = _window.GetVisualDescendants().OfType<TextBlock>().Single(text =>
+                text.Text == _fixture.Localization.GetString("Ui.Navigation.Tagline"));
+            foreach (var culture in new[] { "zh-CN", "en-US" })
+            {
+                await _fixture.Localization.SetCultureAsync(new CultureInfo(culture));
+                await SettleAsync();
+                Check(ReferenceEquals(_fixture.Localization, GitBinder.Desktop.Localization.LocalizationService.Instance),
+                    $"语言服务使用唯一相同实例 {culture}");
+                Check(tagline.Text == _fixture.Localization.GetString("Ui.Navigation.Tagline"),
+                    $"原有主窗口副标题实时切换语言 {culture}；actual={tagline.Text}");
+                foreach (var width in new[] { 1180, 960 })
+                {
+                    _window.Width = width;
+                    _window.Height = width == 960 ? 640 : 780;
+                    foreach (var nav in _fixture.Main.NavigationItems)
+                    {
+                        _fixture.Main.SelectedNav = nav;
+                        await SettleAsync();
+                        Capture(_window, $"{culture}-{width}-{nav.Key[4..]}");
+                        Check(_window.GetVisualDescendants().OfType<UserControl>().Any(), $"页面渲染 {culture} {width} {nav.Key}");
+                    }
+                    await _fixture.Main.OpenSettingsCommand.ExecuteAsync(null);
+                    await SettleAsync();
+                    Capture(_window, $"{culture}-{width}-Settings");
+                    Check(_window.GetVisualDescendants().OfType<SettingsView>().Any(), $"页面渲染 {culture} {width} Nav.Settings");
+                }
+            }
+            await _fixture.Localization.SetCultureAsync(new CultureInfo("zh-CN"));
+            await SettleAsync();
+            Check(tagline.Text == _fixture.Localization.GetString("Ui.Navigation.Tagline"),
+                "原有主窗口副标题从英文切回中文实时刷新");
+            _window.Width = 1180;
+            _window.Height = 780;
+            if (!ScreenshotsOnly)
+            {
+                await VerifySearchAsync();
+                await VerifyGroupsAsync();
+                await VerifyNoticesAsync();
+                await VerifyAccountEditorAsync();
+            }
+            Check(App.Services is null, "验证结束仍未建立真实服务容器");
+            Check(_fixture.Transfer.CloneCount == 0 && _fixture.Transfer.PullCount == 0, "未执行克隆或拉取（Fake 调用次数均为零）");
+        }
+        catch (Exception exception)
+        {
+            exitCode = 1;
+            _checks.Add("FAIL " + exception);
+        }
+        finally
+        {
+            await File.WriteAllLinesAsync(Path.Combine(OutputDirectory, "results.txt"), _checks);
+            foreach (var check in _checks) Console.WriteLine(check);
+            Console.WriteLine("Artifacts: " + OutputDirectory);
+            _desktop.Shutdown(exitCode);
+        }
+    }
+
+    private async Task VerifySearchAsync()
+    {
+        _fixture.Main.SelectedNav = _fixture.Main.NavigationItems.Single(item => item.Key == "Nav.Accounts");
+        await SettleAsync();
+        SearchBox().Text = "  workspace  ";
+        await SettleAsync();
+        Check(_fixture.Accounts.FilteredItems.Count == 2, "账号搜索 TextBox 输入更新过滤结果");
+        SearchBox().Text = "not-found";
+        await SettleAsync();
+        Check(_fixture.Accounts.HasNoMatches, "账号无匹配空态");
+        SearchBox().Text = "";
+        _fixture.Main.SelectedNav = _fixture.Main.NavigationItems.Single(item => item.Key == "Nav.Projects");
+        await SettleAsync();
+        SearchBox().Text = "SERVICE";
+        await SettleAsync();
+        Check(_fixture.Projects.FilteredItems.Count == 1, "项目搜索 TextBox 输入大小写无关过滤");
+        Capture(_window, "projects-filtered");
+        SearchBox().Text = "";
+        _fixture.Main.SelectedNav = _fixture.Main.NavigationItems.Single(item => item.Key == "Nav.Platforms");
+        await SettleAsync();
+        SearchBox().Text = "gitlab";
+        await SettleAsync();
+        Check(_fixture.Platforms.FilteredItems.Count == 1, "平台搜索 TextBox 输入过滤");
+        SearchBox().Text = "";
+    }
+
+    private TextBox SearchBox() => _window.GetVisualDescendants().OfType<TextBox>()
+        .First(box => box.IsVisible && box.PlaceholderText?.Contains("搜索") == true);
+
+    private async Task VerifyGroupsAsync()
+    {
+        _fixture.Main.SelectedNav = _fixture.Main.NavigationItems.Single(item => item.Key == "Nav.Projects");
+        await SettleAsync();
+        var originalCount = _fixture.Groups.Groups.Count;
+        var task = _fixture.Projects.NewGroupCommand.ExecuteAsync(null);
+        await SettleAsync();
+        var dialog = _desktop.Windows.OfType<GroupEditDialog>().Single();
+        Check(dialog.IsVisible, "新增分组命令打开真实模态弹窗");
+        Click(dialog.FindControl<Button>("SaveButton")!);
+        await SettleAsync();
+        Check(dialog.FindControl<Border>("ErrorPanel")!.IsVisible, "空分组名校验失败仍留在弹窗");
+        Check(_fixture.Groups.Groups.Count == originalCount, "校验失败没有保存");
+        Capture(dialog, "group-validation");
+        dialog.FindControl<TextBox>("NameInput")!.Text = "界面验证分组";
+        Click(dialog.FindControl<Button>("SaveButton")!);
+        await task;
+        await DismissNoticesAsync();
+        Check(_fixture.Groups.Groups.Values.Any(group => group.Name == "界面验证分组"), "新增分组已写入内存 Fake 并刷新侧栏");
+        var groupItem = _fixture.Projects.Groups.Single(group => group.Name == "界面验证分组");
+        task = _fixture.Projects.RenameGroupCommand.ExecuteAsync(groupItem);
+        await SettleAsync();
+        dialog = _desktop.Windows.OfType<GroupEditDialog>().Single();
+        Check(dialog.FindControl<TextBox>("NameInput")!.Text == groupItem.Name, "重命名弹窗回填名称");
+        dialog.FindControl<TextBox>("NameInput")!.Text = "验证分组已重命名";
+        Capture(dialog, "group-rename");
+        Click(dialog.FindControl<Button>("SaveButton")!);
+        await task;
+        await DismissNoticesAsync();
+        Check(_fixture.Groups.Groups.Values.Any(group => group.Name == "验证分组已重命名"), "分组重命名成功");
+        task = _fixture.Projects.NewGroupCommand.ExecuteAsync(null);
+        await SettleAsync();
+        dialog = _desktop.Windows.OfType<GroupEditDialog>().Single();
+        dialog.FindControl<TextBox>("NameInput")!.Text = "取消不能保存";
+        Click(dialog.FindControl<Button>("CancelButton")!);
+        await task;
+        Check(_fixture.Groups.Groups.Count == originalCount + 1, "取消分组弹窗不保存");
+    }
+
+    private async Task VerifyNoticesAsync()
+    {
+        var message = "认证成功（演示结果）\n此窗口使用可选择的正文，不使用只读输入框。\n" + string.Join('\n', Enumerable.Range(1, 24).Select(n => $"第 {n} 项：这是隔离界面验证中的长消息，用来确认滚动与排版。"));
+        var dialog = new MessageDialog(message);
+        var close = dialog.ShowDialog(_window);
+        await SettleAsync();
+        var text = dialog.FindControl<SelectableTextBlock>("MessageText")!;
+        text.SelectAll();
+        Check(text.SelectionEnd - text.SelectionStart == message.Length, "消息正文可全选（未写入系统剪贴板）");
+        Check(!dialog.GetVisualDescendants().OfType<TextBox>().Any(), "结果弹窗没有只读 TextBox");
+        Capture(dialog, "message-long-selected");
+        Click(dialog.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "关闭")));
+        await close;
+        var confirm = new ConfirmationDialog("删除确认", "这是虚构条目，只验证取消，不执行删除。", "删除");
+        var confirmation = confirm.ShowDialog<bool?>(_window);
+        await SettleAsync();
+        var cancel = confirm.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "取消"));
+        Check(cancel.IsDefault, "确认弹窗默认按钮为取消");
+        Capture(confirm, "confirmation");
+        Click(cancel);
+        Check(await confirmation is false, "取消确认返回 false");
+    }
+
+    private async Task VerifyAccountEditorAsync()
+    {
+        _fixture.Main.SelectedNav = _fixture.Main.NavigationItems.Single(item => item.Key == "Nav.Accounts");
+        await SettleAsync();
+        var count = (await _fixture.AccountRepository.GetAllAsync()).Count;
+        var task = _fixture.Accounts.AddCommand.ExecuteAsync(null);
+        await SettleAsync();
+        var editor = _desktop.Windows.OfType<AccountEditWindow>().Single();
+        Check(editor.IsVisible, "新增账号命令打开真实账号编辑窗");
+        Capture(editor, "account-editor");
+        Click(editor.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "取消")));
+        await task;
+        Check((await _fixture.AccountRepository.GetAllAsync()).Count == count, "取消账号编辑未写入账号仓储");
+    }
+
+    private async Task DismissNoticesAsync()
+    {
+        await SettleAsync();
+        foreach (var notice in _desktop.Windows.OfType<MessageDialog>().ToArray()) notice.Close();
+        await SettleAsync();
+    }
+
+    private static void Click(Button button)
+    {
+        if (!button.IsEnabled) throw new InvalidOperationException("不能点击禁用按钮");
+        button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+    }
+
+    private static async Task SettleAsync()
+    {
+        await Task.Delay(180);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+    }
+
+    private static void Capture(Window window, string name)
+    {
+        window.UpdateLayout();
+        var size = new PixelSize(Math.Max(1, (int)Math.Ceiling(window.Bounds.Width)), Math.Max(1, (int)Math.Ceiling(window.Bounds.Height)));
+        using var bitmap = new RenderTargetBitmap(size, new Vector(96, 96));
+        bitmap.Render(window);
+        bitmap.Save(Path.Combine(OutputDirectory, name + ".png"), PngBitmapEncoderOptions.Default);
+    }
+
+    private void Check(bool condition, string message)
+    {
+        if (!condition) throw new InvalidOperationException(message);
+        _checks.Add("PASS " + message);
+    }
+}

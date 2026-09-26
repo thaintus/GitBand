@@ -91,7 +91,7 @@ internal static class StringsEnUs
         ["CLONE_FAILED"] = "Clone did not complete. Check network, credentials, SSH host trust and key unlocking. Partial files may remain; inspect them and use a new destination before retrying.",
         ["CLONE_REGISTER_FAILED"] = "Code was cloned but registration did not complete. Use Add Repository for the local folder; do not clone again.",
         ["CLONE_BIND_FAILED"] = "Code was cloned and registered, but binding did not complete. Select the account on the project card; do not clone again.",
-        ["PULL_DIRTY"] = "Local changes or untracked files exist. Handle them in your terminal or IDE before pulling.",
+        ["PULL_DIRTY"] = "The remote update would overwrite local changes or untracked files, so Git stopped the update. Handle those files in your terminal or IDE, then pull again.",
         ["PULL_IN_PROGRESS"] = "A merge, rebase, or cherry-pick is in progress. Finish or abort it first.",
         ["PULL_NO_UPSTREAM"] = "The current branch does not track origin, or HEAD is detached. Set an origin tracking branch in your terminal or IDE first.",
         ["PULL_FAILED"] = "Pull did not complete: network/authentication failure, timeout, or diverged history. Inspect in your terminal or IDE; no automatic reset, rebase, or merge commit was requested.",

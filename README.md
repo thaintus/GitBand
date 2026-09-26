@@ -139,7 +139,7 @@ Windows 用户数据默认位于：
 
 可以。在项目页点击“拉取项目”，填写 HTTPS/SSH 仓库地址，选择绑定账号、已有父目录和新项目文件夹名称，然后点击“开始拉取”。成功后自动登记并绑定；全局模式下认证仍以全局账号为准，所选账号作为项目绑定保留。此入口按地址克隆，不通过平台 API 枚举仓库。已有目录继续使用“添加仓库”登记。
 
-项目卡片上的“拉取”会使用当前生效账号快进更新当前分支。要求工作区干净，且当前分支已跟踪 origin 分支；有未提交修改、未跟踪文件、正在合并/变基、分离 HEAD 或历史分叉时停止，不自动 stash、reset、变基或生成合并提交。子模块不递归更新。
+项目卡片上的“拉取”会使用当前生效账号快进更新当前分支。当前分支须跟踪 origin 分支；已有本地改动或未跟踪文件时，让 Git 判断能否安全更新，如果会覆盖本地文件则停止。正在合并/变基、分离 HEAD 或历史分叉时也会停止；不自动 stash、reset、变基或生成合并提交。子模块不递归更新。
 
 项目页的“分组”侧栏支持新建、重命名和删除分组。点击加号或铅笔图标，在弹窗中填写分组名称。通过项目本地路径右侧的下拉框设置分组，选择后立即保存；“全部项目”和“未分组”为固定入口，分组筛选可与搜索叠加。删除分组需确认，仅将项目移回未分组，不删除代码或解绑账号。
 
@@ -187,7 +187,7 @@ dotnet test GitBinder.slnx -c Debug --no-build
 
 ```powershell
 # 版本号为示例，可按本次发布计划调整
-.\build\publish.ps1 -Version 1.1.6
+.\build\publish.ps1 -Version 1.1.9
 .\build\publish\app\GitBinder.Desktop.exe
 ```
 
@@ -200,15 +200,15 @@ dotnet test GitBinder.slnx -c Debug --no-build
 
 ```powershell
 # 同时发布 Desktop 与 Credential Helper，再生成 Windows x64 安装包
-.\build\build-installer.ps1 -Version 1.1.6
+.\build\build-installer.ps1 -Version 1.1.9
 ```
 
-输出为 `dist/GitBinder-1.1.2-setup.exe`。请为新发行版指定新的版本号，避免覆盖同名历史产物。该命令负责发布和打包，**不执行单元测试**。
+输出为 `dist/GitBinder-1.1.9-setup.exe`。请为新发行版指定新的版本号，避免覆盖同名历史产物。该命令负责发布和打包，**不执行单元测试**。
 
 如需串联构建、测试和打包：
 
 ```powershell
-.\build\build.ps1 -Configuration Release -Package -Version 1.1.6
+.\build\build.ps1 -Configuration Release -Package -Version 1.1.9
 ```
 
 ### 移动源码目录

@@ -6,6 +6,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
              x:Class="GitBinder.Desktop.Views.ProjectsView"
+             Classes="projects-page"
              x:DataType="vm:ProjectsViewModel">
 
     <Grid Margin="28,24" RowDefinitions="Auto,Auto,Auto,*,Auto">
@@ -15,15 +16,15 @@
                 <TextBlock Classes="page-description" Text="{loc:Loc Projects.Description}" />
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Button Command="{Binding CreateCommand}" Classes="secondary" ToolTip.Tip="{loc:Loc Projects.AddHint}">
+                <Button Command="{Binding CreateCommand}" Classes="secondary project-entry" ToolTip.Tip="{loc:Loc Projects.AddHint}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Path Classes="action-glyph" Data="M3,7 H9 L11,10 H21 V21 H3 Z M3,7 V4 H9 L11,7 H19 M12,12 V18 M9,15 H15" />
                         <TextBlock Text="{loc:Loc Projects.Add}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Command="{Binding OpenCloneCommand}" Classes="primary" ToolTip.Tip="{loc:Loc Projects.CloneHint}">
+                <Button Command="{Binding OpenCloneCommand}" Classes="primary project-entry" ToolTip.Tip="{loc:Loc Projects.CloneHint}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Path Classes="action-glyph" Data="M12,3 V15 M7,10 L12,15 L17,10 M4,16 V21 H20 V16" />
+                        <Path Classes="action-glyph pull-glyph" Data="M20,4 L5,19 M5,19 V11 M5,19 H13" />
                         <TextBlock Text="{loc:Loc Projects.Clone}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
@@ -68,28 +69,37 @@
             </StackPanel>
         </Border>
 
-        <Grid Grid.Row="2" Margin="0,18,0,0" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-            <Grid>
-                <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         PlaceholderText="{loc:Loc Projects.SearchPlaceholder}"
-                         AutomationProperties.Name="{loc:Loc Projects.SearchPlaceholder}" Padding="38,9,40,9" />
-                <Path Width="16" Height="16" Margin="14,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
-                      Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.7"
-                      IsHitTestVisible="False" Data="M10,2 A8,8 0 1 1 10,18 A8,8 0 1 1 10,2 M16,16 L22,22" />
-                <Button Command="{Binding ClearSearchCommand}" Classes="ghost icon-action small"
-                        IsVisible="{Binding HasSearchText}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0"
-                        ToolTip.Tip="{loc:Loc Common.Search.Clear}" AutomationProperties.Name="{loc:Loc Common.Search.Clear}">
-                    <Path Classes="action-glyph" Data="M6,6 L18,18 M18,6 L6,18" />
-                </Button>
+        <Border Grid.Row="2" Classes="project-searchbar" Margin="0,18,0,0">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Grid>
+                    <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Classes="project-search-input"
+                             PlaceholderText="{loc:Loc Projects.SearchPlaceholder}"
+                             AutomationProperties.Name="{loc:Loc Projects.SearchPlaceholder}" Padding="38,9,40,9" />
+                    <Path Width="16" Height="16" Margin="14,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                          Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.7"
+                          IsHitTestVisible="False" Data="M10,2 A8,8 0 1 1 10,18 A8,8 0 1 1 10,2 M16,16 L22,22" />
+                    <Button Command="{Binding ClearSearchCommand}" Classes="ghost icon-action small"
+                            IsVisible="{Binding HasSearchText}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0"
+                            ToolTip.Tip="{loc:Loc Common.Search.Clear}" AutomationProperties.Name="{loc:Loc Common.Search.Clear}">
+                        <Path Classes="action-glyph" Data="M6,6 L18,18 M18,6 L6,18" />
+                    </Button>
+                </Grid>
+                <Border Grid.Column="1" Classes="project-result-count">
+                    <TextBlock Classes="caption" Text="{Binding ProjectCountLabel}" VerticalAlignment="Center" />
+                </Border>
             </Grid>
-            <TextBlock Grid.Column="1" Classes="caption" Text="{Binding ProjectCountLabel}" VerticalAlignment="Center" />
-        </Grid>
+        </Border>
 
         <Grid Grid.Row="3" Margin="0,14,0,0" ColumnDefinitions="170,*" ColumnSpacing="14" IsEnabled="{Binding CanManageProjects}">
-            <Border Classes="project-sidebar" Padding="0,0,12,0">
+            <Border Classes="project-sidebar">
                 <Grid RowDefinitions="Auto,*" RowSpacing="10">
-                    <Grid ColumnDefinitions="*,Auto" Margin="8,0,0,0">
-                        <TextBlock Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Groups.Title}" VerticalAlignment="Center" />
+                    <Grid ColumnDefinitions="*,Auto" Margin="10,0,2,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.6"
+                                  Data="M3,3 H9 V9 H3 Z M15,3 H21 V9 H15 Z M3,15 H9 V21 H3 Z M15,15 H21 V21 H15 Z" />
+                            <TextBlock Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Groups.Title}" VerticalAlignment="Center" />
+                        </StackPanel>
                         <Button Grid.Column="1" Classes="ghost icon-action small" Command="{Binding NewGroupCommand}"
                                 ToolTip.Tip="{loc:Loc Groups.New}" AutomationProperties.Name="{loc:Loc Groups.New}">
                             <Path Classes="action-glyph" Data="M12,5 V19 M5,12 H19" />
@@ -99,24 +109,31 @@
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" Background="Transparent" Padding="0" BorderThickness="0">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:ProjectGroupItemViewModel">
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="6">
-                                    <TextBlock Text="{Binding Name}" Margin="2,4,26,0" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
-                                    <Button HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,0,-2,0" Content="×" Classes="icon-danger"
-                                            IsVisible="{Binding CanEdit}" ToolTip.Tip="{loc:Loc Groups.Delete}" AutomationProperties.Name="{loc:Loc Groups.Delete}"
-                                            Command="{Binding $parent[ListBox].((vm:ProjectsViewModel)DataContext).DeleteGroupCommand}" CommandParameter="{Binding}" />
-                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="2">
+                                <Grid RowDefinitions="24,24" RowSpacing="2">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                                        <TextBlock Classes="project-group-name" Text="{Binding Name}" Margin="2,0,0,0" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+                                            <Button Classes="ghost icon-action small pull-action" IsEnabled="{Binding CanPull}"
+                                                    ToolTip.Tip="{loc:Loc Groups.PullHint}" AutomationProperties.Name="{loc:Loc Groups.PullHint}"
+                                                    Command="{Binding $parent[ListBox].((vm:ProjectsViewModel)DataContext).PullGroupCommand}" CommandParameter="{Binding}">
+                                                <Path Classes="action-glyph pull-glyph" Data="M20,4 L5,19 M5,19 V11 M5,19 H13" />
+                                            </Button>
+                                            <Button Classes="ghost icon-action small destructive" IsVisible="{Binding CanEdit}"
+                                                    ToolTip.Tip="{loc:Loc Groups.Delete}" AutomationProperties.Name="{loc:Loc Groups.Delete}"
+                                                    Command="{Binding $parent[ListBox].((vm:ProjectsViewModel)DataContext).DeleteGroupCommand}" CommandParameter="{Binding}">
+                                                <Path Classes="action-glyph" Data="M5,5 L19,19 M19,5 L5,19" />
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="4">
                                         <Border Classes="group-count" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="2,0,0,0">
-                                            <TextBlock Text="{Binding Count}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBlock Classes="project-group-count" Text="{Binding Count}" />
                                         </Border>
                                         <Button Grid.Column="1" Classes="ghost icon-action small" IsVisible="{Binding CanEdit}"
                                                 ToolTip.Tip="{loc:Loc Groups.Rename}" AutomationProperties.Name="{loc:Loc Groups.Rename}"
                                                 Command="{Binding $parent[ListBox].((vm:ProjectsViewModel)DataContext).RenameGroupCommand}" CommandParameter="{Binding}">
                                             <Path Classes="action-glyph" Data="M14,5 L19,10 M4,20 L9,19 L21,7 L17,3 L5,15 Z" />
-                                        </Button>
-                                        <Button Grid.Column="2" Classes="secondary icon-action small" IsEnabled="{Binding CanPull}"
-                                                ToolTip.Tip="{loc:Loc Groups.PullHint}" AutomationProperties.Name="{loc:Loc Groups.PullHint}"
-                                                Command="{Binding $parent[ListBox].((vm:ProjectsViewModel)DataContext).PullGroupCommand}" CommandParameter="{Binding}">
-                                            <Path Classes="action-glyph" Data="M12,3 V15 M7,10 L12,15 L17,10 M4,16 V21 H20 V16" />
                                         </Button>
                                     </Grid>
                                 </Grid>
@@ -125,7 +142,7 @@
                     </ListBox>
                 </Grid>
             </Border>
-        <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled" Padding="0,0,4,0">
             <StackPanel>
                 <Border Classes="card" Padding="32" IsVisible="{Binding !HasItems}">
                     <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="360">
@@ -148,42 +165,44 @@
                         <DataTemplate>
                             <Border Classes="card project-card" Margin="0,0,0,10" IsEnabled="{Binding !IsPathSaving}">
                                 <Grid>
-                                    <Grid Margin="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10" Margin="0,0,34,0">
-                                            <Border Width="28" Height="28" CornerRadius="8" Background="{DynamicResource PrimarySoftBrush}">
-                                                <Path Width="16" Height="16" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.6"
-                                                      Data="M4,3 H15 L20,8 V21 H4 Z M15,3 V8 H20 M8,12 H16 M8,16 H14" />
+                                    <Grid Margin="14,12" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+                                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                                            <Border Width="32" Height="32" Classes="project-repository-icon" VerticalAlignment="Top">
+                                                <Path Width="18" Height="18" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}" StrokeThickness="1.6"
+                                                      StrokeLineCap="Round" StrokeJoin="Round"
+                                                      Data="M5,3 H18 A2,2 0 0 1 20,5 V21 H6 A2,2 0 0 1 4,19 V5 A2,2 0 0 1 5,3 Z M4,17 H20 M8,7 H16 M8,11 H13" />
                                             </Border>
-                                            <TextBlock Grid.Column="1" Classes="section-title" VerticalAlignment="Center" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                            <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                                                <TextBlock Classes="project-name" Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}" />
+                                                <WrapPanel Margin="0,0,-10,-3">
+                                                    <TextBlock Classes="project-detail" Margin="0,0,10,3" Text="{Binding ProtocolLabel}" />
+                                                    <TextBlock Classes="project-detail" Margin="0,0,10,3" MaxWidth="240"
+                                                               Text="{Binding HostLabel}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OriginUrlDisplay}" />
+                                                </WrapPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Top" Margin="0,4,0,0">
                                                 <Button Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).StartEditRemoteCommand}"
                                                         CommandParameter="{Binding}" Classes="ghost icon-action"
                                                         ToolTip.Tip="{loc:Loc Projects.EditRemote}" AutomationProperties.Name="{loc:Loc Projects.EditRemote}">
                                                     <Path Classes="action-glyph" Data="M10,13 C12,15 15,15 17,13 L20,10 C24,6 18,0 14,4 L12,6 M14,11 C12,9 9,9 7,11 L4,14 C0,18 6,24 10,20 L12,18" />
                                                 </Button>
                                                 <Button Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).PullCommand}"
-                                                        CommandParameter="{Binding}" Classes="secondary icon-action"
+                                                        CommandParameter="{Binding}" Classes="ghost icon-action pull-action"
                                                         ToolTip.Tip="{loc:Loc Projects.PullHint}" AutomationProperties.Name="{loc:Loc Projects.Pull}">
-                                                    <Path Classes="action-glyph" Data="M12,3 V15 M7,10 L12,15 L17,10 M4,16 V21 H20 V16" />
+                                                    <Path Classes="action-glyph pull-glyph" Data="M20,4 L5,19 M5,19 V11 M5,19 H13" />
+                                                </Button>
+                                                <Button Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).RemoveCommand}"
+                                                        CommandParameter="{Binding}" Classes="ghost icon-action destructive"
+                                                        ToolTip.Tip="{loc:Loc Projects.Remove}" AutomationProperties.Name="{loc:Loc Projects.Remove}">
+                                                    <Path Classes="action-glyph" Data="M5,5 L19,19 M19,5 L5,19" />
                                                 </Button>
                                             </StackPanel>
                                         </Grid>
-                                        <WrapPanel Grid.Row="1" Margin="0,4,-8,-4">
-                                            <Border Classes="badge badge-success project-meta" Margin="0,0,8,4" MaxWidth="220">
-                                                <TextBlock FontSize="12" Foreground="{DynamicResource SuccessBrush}" Text="{Binding EffectiveAccountLabel}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EffectiveAccountLabel}" />
-                                            </Border>
-                                            <Border Classes="project-meta" Margin="0,0,8,4">
-                                                <TextBlock Classes="caption" Text="{Binding ProtocolLabel}" />
-                                            </Border>
-                                            <Border Classes="project-meta" Margin="0,0,8,4" MaxWidth="240">
-                                                <TextBlock Classes="caption" Text="{Binding HostLabel}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding OriginUrlDisplay}" />
-                                            </Border>
-                                        </WrapPanel>
-                                        <StackPanel Grid.Row="2" Margin="0,8,0,0" IsVisible="{Binding HasMetadataWarning}">
+                                        <StackPanel Grid.Row="1" Margin="0,8,0,0" IsVisible="{Binding HasMetadataWarning}">
                                             <TextBlock Classes="caption" Foreground="{DynamicResource DangerBrush}" Text="{Binding MetadataWarning}"
                                                        IsVisible="{Binding HasMetadataWarning}" TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <Border Grid.Row="3" Classes="inset" Margin="0,10,0,0" IsVisible="{Binding IsRemoteEditorOpen}">
+                                        <Border Grid.Row="2" Classes="inset" Margin="0,10,0,0" IsVisible="{Binding IsRemoteEditorOpen}">
                                             <StackPanel Spacing="10">
                                                 <TextBlock Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Projects.RemoteUrl}" />
                                                 <TextBox Text="{Binding EditingOriginUrl, Mode=TwoWay}" PlaceholderText="{loc:Loc Projects.RemoteUrlPlaceholder}" />
@@ -200,9 +219,9 @@
                                                 </Grid>
                                             </StackPanel>
                                         </Border>
-                                        <Border Grid.Row="4" Classes="inset project-binding" Margin="0,10,0,0">
+                                        <Border Grid.Row="3" Classes="project-binding" Margin="0,10,0,0">
                                             <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*" ColumnSpacing="6">
-                                                <TextBlock Classes="caption" VerticalAlignment="Center" FontWeight="SemiBold" Text="{loc:Loc Projects.BindAccount}" />
+                                                <TextBlock Classes="project-detail" VerticalAlignment="Center" Text="{loc:Loc Projects.BindAccount}" />
                                                 <ComboBox Grid.Column="1" Classes="compact" Width="128" ItemsSource="{Binding AvailableAccounts}" SelectedItem="{Binding SelectedBindingAccount}"
                                                           SelectionChanged="OnBindingAccountSelectionChanged" IsEnabled="{Binding !IsSwitchingBinding}" VerticalAlignment="Center"
                                                           AutomationProperties.Name="{loc:Loc Projects.BindAccount}">
@@ -224,16 +243,24 @@
                                                         ToolTip.Tip="{loc:Loc Projects.Unbind}" AutomationProperties.Name="{loc:Loc Projects.Unbind}">
                                                     <Path Classes="action-glyph" Data="M9,17 H7 A5,5 0 0 1 7,7 M15,7 H17 A5,5 0 0 1 17,17 M8,12 H12 M3,3 L21,21" />
                                                 </Button>
-                                                <Border Grid.Column="4" Classes="badge badge-success" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0,0,0">
-                                                    <TextBlock FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SuccessBrush}" Text="{Binding EffectiveReasonLabel}" TextWrapping="Wrap" />
-                                                </Border>
+                                                <StackPanel Grid.Column="4" Spacing="2" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                    <TextBlock FontSize="11" Foreground="{DynamicResource SuccessBrush}" Text="{Binding EffectiveAccountLabel}"
+                                                               TextAlignment="Right" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EffectiveAccountLabel}" />
+                                                    <TextBlock Classes="project-detail" Text="{Binding EffectiveReasonLabel}" TextAlignment="Right"
+                                                               TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding EffectiveReasonLabel}" />
+                                                </StackPanel>
                                             </Grid>
                                         </Border>
-                                        <Grid Grid.Row="5" Margin="0,6,0,0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
+                                        <Grid Grid.Row="4" Margin="0,8,0,0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="6">
                                             <Path Width="14" Height="14" Stretch="Uniform" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="1.6" VerticalAlignment="Center"
                                                   Data="M2,6 H10 L12,9 H22 V21 H2 Z M2,6 V3 H10 L12,6 H20 V9" />
-                                            <TextBlock Grid.Column="1" Classes="caption" Text="{Binding PathText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PathText}" VerticalAlignment="Center" />
-                                            <ComboBox Grid.Column="2" Width="106" Classes="compact project-group-choice" ItemsSource="{Binding GroupChoices}"
+                                            <TextBlock Grid.Column="1" Classes="project-detail" Text="{Binding PathText}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding PathText}" VerticalAlignment="Center" />
+                                            <Button Grid.Column="2" Classes="ghost icon-action small"
+                                                    ToolTip.Tip="{loc:Loc Projects.EditPath}" AutomationProperties.Name="{loc:Loc Projects.EditPath}"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).StartEditPathCommand}" CommandParameter="{Binding}">
+                                                <Path Classes="action-glyph" Data="M14,5 L19,10 M4,20 L9,19 L21,7 L17,3 L5,15 Z" />
+                                            </Button>
+                                            <ComboBox Grid.Column="3" Width="96" Margin="10,0,0,0" Classes="compact project-group-choice" ItemsSource="{Binding GroupChoices}"
                                                       SelectedItem="{Binding SelectedProjectGroup, Mode=TwoWay}" SelectionChanged="OnProjectGroupSelectionChanged"
                                                       IsEnabled="{Binding !IsAssigningGroup}" ToolTip.Tip="{loc:Loc Groups.Assign}" AutomationProperties.Name="{loc:Loc Groups.Assign}">
                                                 <ComboBox.ItemTemplate>
@@ -242,13 +269,8 @@
                                                     </DataTemplate>
                                                 </ComboBox.ItemTemplate>
                                             </ComboBox>
-                                            <Button Grid.Column="3" Classes="ghost icon-action small"
-                                                    ToolTip.Tip="{loc:Loc Projects.EditPath}" AutomationProperties.Name="{loc:Loc Projects.EditPath}"
-                                                    Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).StartEditPathCommand}" CommandParameter="{Binding}">
-                                                <Path Classes="action-glyph" Data="M14,5 L19,10 M4,20 L9,19 L21,7 L17,3 L5,15 Z" />
-                                            </Button>
                                         </Grid>
-                                        <Border Grid.Row="6" Classes="inset" Margin="0,10,0,0" IsVisible="{Binding IsPathEditorOpen}">
+                                        <Border Grid.Row="5" Classes="inset" Margin="0,10,0,0" IsVisible="{Binding IsPathEditorOpen}">
                                             <StackPanel Spacing="10">
                                                 <TextBlock Classes="caption" Text="{loc:Loc Projects.PathHint}" TextWrapping="Wrap" />
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -266,11 +288,6 @@
                                             </StackPanel>
                                         </Border>
                                     </Grid>
-                                    <Button Margin="0,8,8,0" HorizontalAlignment="Right" VerticalAlignment="Top" Content="×"
-                                            ToolTip.Tip="{loc:Loc Projects.Remove}"
-                                            AutomationProperties.Name="{loc:Loc Projects.Remove}"
-                                            Command="{Binding $parent[ItemsControl].((vm:ProjectsViewModel)DataContext).RemoveCommand}"
-                                            CommandParameter="{Binding}" Classes="icon-danger" />
                                 </Grid>
                             </Border>
                         </DataTemplate>

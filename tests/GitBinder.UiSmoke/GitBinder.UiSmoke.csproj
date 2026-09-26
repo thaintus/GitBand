@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/GitBinder.Desktop/GitBinder.Desktop.csproj" />
+    <Compile Include="../GitBinder.Tests/Fakes/FakeRepositories.cs" Link="Fakes/FakeRepositories.cs" />
+    <Compile Include="../GitBinder.Tests/Fakes/FakeProjectGroupRepository.cs" Link="Fakes/FakeProjectGroupRepository.cs" />
+  </ItemGroup>
+</Project>

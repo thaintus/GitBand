@@ -306,7 +306,7 @@ GitBinder 不复制 Repository 内容。
 
 - 新增 Application 端口 `IGitTransfer` 与用例服务 `ProjectTransferService`，由 Infrastructure 的 `GitTransfer` 通过 `ICommandExecutor` 执行参数数组；不引入平台 API、提交、推送或冲突解决器。
 - 克隆先验证 HTTPS/SSH 地址与目标目录、按 `EffectiveAccountResolver.ResolveForClone` 选择认证账号；完成后登记时跳过默认绑定，直接绑定用户所选账号。全局模式控制实际认证，所选绑定保留供关闭全局模式后使用。
-- 拉取先检查干净工作区、进行中的 Git 操作和 origin 跟踪分支，再用当前有效账号执行 `pull --ff-only --no-rebase --no-recurse-submodules`；禁用自动 stash，不重置或强推，不递归拉取子模块。
+- 拉取先检查进行中的 Git 操作和 origin 跟踪分支，再用当前有效账号执行 `pull --ff-only --no-rebase --no-recurse-submodules`；允许存在本地改动及未跟踪文件，由 Git 判断更新是否会覆盖它们，真实覆盖冲突映射为 `PULL_DIRTY`。禁用自动 stash，不重置或强推，不递归拉取子模块。
 - HTTPS 重置 helper 与额外认证头，在精确 URL 作用域指定带账号 ID 的凭据助手；SSH 指定单个私钥，保持严格主机校验，仅允许 Agent 为该密钥签名。子进程禁止交互，隔离全局/系统 Git 配置及继承的仓库路径环境，不更改开发机环境或配置文件。
 - `CommandExecutionOptions` 提供子进程环境与 30 分钟超时；取消/超时终止进程树，错误不回显原始 stderr。失败不自动删除部分克隆目录，登记和绑定失败分别反馈。数据库 Schema 不变。
 

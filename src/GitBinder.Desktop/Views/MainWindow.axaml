@@ -16,7 +16,7 @@
     <Grid Background="{DynamicResource AppBackgroundBrush}" ColumnDefinitions="216,*">
         <!-- 侧栏贯穿窗口，导航与工作区保持稳定分区。 -->
         <Border Background="{DynamicResource NavigationBrush}">
-            <Grid Margin="16,24,16,20" RowDefinitions="Auto,Auto,*">
+            <Grid Margin="16,24,16,20" RowDefinitions="Auto,Auto,*,Auto">
                 <Grid Margin="8,0" ColumnDefinitions="Auto,*" ColumnSpacing="12">
                     <Border Width="36" Height="36" CornerRadius="10" Background="{DynamicResource PrimaryBrush}">
                         <TextBlock Text="G" FontSize="21" FontWeight="Bold" Foreground="{DynamicResource OnPrimaryBrush}"
@@ -42,6 +42,21 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+                <Border Grid.Row="3" Margin="0,16,0,0" Padding="0,12,0,0"
+                        BorderThickness="0,1,0,0" BorderBrush="{DynamicResource NavigationHoverBrush}">
+                    <Button Classes="sidebar-settings" Classes.active="{Binding IsSettingsSelected}"
+                            Command="{Binding OpenSettingsCommand}" HorizontalAlignment="Stretch"
+                            ToolTip.Tip="{loc:Loc Nav.Settings}" AutomationProperties.Name="{loc:Loc Nav.Settings}">
+                        <Grid ColumnDefinitions="20,*" ColumnSpacing="12">
+                            <Path Width="18" Height="18" Stretch="Uniform" StrokeThickness="1.7"
+                                  StrokeLineCap="Round" StrokeJoin="Round" VerticalAlignment="Center"
+                                  Stroke="{Binding $parent[Button].Foreground}"
+                                  Data="M10,2 H14 L14.6,4.8 L16.4,5.8 L19.1,5 L21.1,8.5 L19,10.5 V13.5 L21.1,15.5 L19.1,19 L16.4,18.2 L14.6,19.2 L14,22 H10 L9.4,19.2 L7.6,18.2 L4.9,19 L2.9,15.5 L5,13.5 V10.5 L2.9,8.5 L4.9,5 L7.6,5.8 L9.4,4.8 Z M15.5,12 A3.5,3.5 0 1 1 8.5,12 A3.5,3.5 0 1 1 15.5,12" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc Nav.Settings}" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{Binding $parent[Button].Foreground}" VerticalAlignment="Center" />
+                        </Grid>
+                    </Button>
+                </Border>
             </Grid>
         </Border>
 
