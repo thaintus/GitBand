@@ -9,7 +9,7 @@
              Classes="projects-page"
              x:DataType="vm:ProjectsViewModel">
 
-    <Grid Margin="28,24" RowDefinitions="Auto,Auto,Auto,*,Auto">
+    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*,Auto">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16" IsEnabled="{Binding CanManageProjects}">
             <StackPanel Spacing="5">
                 <TextBlock Classes="page-title" Text="{loc:Loc Nav.Projects}" />
@@ -22,54 +22,18 @@
                         <TextBlock Text="{loc:Loc Projects.Add}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Command="{Binding OpenCloneCommand}" Classes="primary project-entry" ToolTip.Tip="{loc:Loc Projects.CloneHint}">
+                <Button x:Name="CloneRepositoryButton" Command="{Binding OpenCloneCommand}" Classes="primary project-entry"
+                        ToolTip.Tip="{loc:Loc Projects.CloneHint}" AutomationProperties.Name="{loc:Loc Projects.Clone}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Path Classes="action-glyph pull-glyph" Data="M20,4 L5,19 M5,19 V11 M5,19 H13" />
+                        <Path Classes="action-glyph" Width="16" Height="16" StrokeThickness="1.6"
+                              Data="M7,7 V17 M7,14 C7,11 17,13 17,7 M7,3 A2,2 0 1 1 7,7 A2,2 0 1 1 7,3 M7,17 A2,2 0 1 1 7,21 A2,2 0 1 1 7,17 M17,3 A2,2 0 1 1 17,7 A2,2 0 1 1 17,3" />
                         <TextBlock Text="{loc:Loc Projects.Clone}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </StackPanel>
         </Grid>
 
-        <Border Grid.Row="1" Classes="card" Padding="16" Margin="0,12,0,0"
-                IsVisible="{Binding IsCloneEditorOpen}" IsEnabled="{Binding !IsTransferBusy}">
-            <StackPanel Spacing="8">
-                <TextBlock Classes="section-title" Text="{loc:Loc Projects.Clone}" />
-                <TextBlock Classes="caption" Text="{loc:Loc Projects.CloneHint}" TextWrapping="Wrap" />
-                <Grid ColumnDefinitions="180,*" ColumnSpacing="8">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="caption" Text="{loc:Loc Projects.CloneAccount}" />
-                        <ComboBox ItemsSource="{Binding CloneAccounts}" SelectedItem="{Binding SelectedCloneAccount}" HorizontalAlignment="Stretch">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate><TextBlock Text="{Binding DisplayAlias}" TextTrimming="CharacterEllipsis" /></DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Spacing="4">
-                        <TextBlock Classes="caption" Text="{loc:Loc Projects.RemoteUrl}" />
-                        <TextBox Text="{Binding CloneRemoteUrl, Mode=TwoWay}" PlaceholderText="{loc:Loc Projects.RemoteUrlPlaceholder}" />
-                    </StackPanel>
-                </Grid>
-                <Grid ColumnDefinitions="*,Auto,180" ColumnSpacing="8">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="caption" Text="{loc:Loc Projects.CloneParent}" />
-                        <TextBox Text="{Binding CloneParentDirectory, Mode=TwoWay}" PlaceholderText="{loc:Loc Projects.CloneParent}" />
-                    </StackPanel>
-                    <Button Grid.Column="1" Content="{loc:Loc Projects.BrowsePath}" Command="{Binding BrowseCloneDirectoryCommand}"
-                            Classes="secondary" VerticalAlignment="Bottom" />
-                    <StackPanel Grid.Column="2" Spacing="4">
-                        <TextBlock Classes="caption" Text="{loc:Loc Projects.CloneFolder}" />
-                        <TextBox Text="{Binding CloneFolderName, Mode=TwoWay}" PlaceholderText="{loc:Loc Projects.CloneFolder}" />
-                    </StackPanel>
-                </Grid>
-                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
-                    <Button Content="{loc:Loc Common.Cancel}" Command="{Binding CloseCloneCommand}" Classes="ghost" />
-                    <Button Content="{loc:Loc Projects.StartClone}" Command="{Binding CloneCommand}" Classes="primary" />
-                </StackPanel>
-            </StackPanel>
-        </Border>
-
-        <Border Grid.Row="2" Classes="project-searchbar" Margin="0,18,0,0">
+        <Border Grid.Row="1" Classes="project-searchbar" Margin="0,18,0,0">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
                 <Grid>
                     <TextBox Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -91,7 +55,7 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="3" Margin="0,14,0,0" ColumnDefinitions="170,*" ColumnSpacing="14" IsEnabled="{Binding CanManageProjects}">
+        <Grid Grid.Row="2" Margin="0,14,0,0" ColumnDefinitions="170,*" ColumnSpacing="14" IsEnabled="{Binding CanManageProjects}">
             <Border Classes="project-sidebar">
                 <Grid RowDefinitions="Auto,*" RowSpacing="10">
                     <Grid ColumnDefinitions="*,Auto" Margin="10,0,2,0">
@@ -202,7 +166,7 @@
                                             <TextBlock Classes="caption" Foreground="{DynamicResource DangerBrush}" Text="{Binding MetadataWarning}"
                                                        IsVisible="{Binding HasMetadataWarning}" TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <Border Grid.Row="2" Classes="inset" Margin="0,10,0,0" IsVisible="{Binding IsRemoteEditorOpen}">
+                                        <Border Grid.Row="2" Classes="inset project-remote-editor" Margin="0,10,0,0" IsVisible="{Binding IsRemoteEditorOpen}">
                                             <StackPanel Spacing="10">
                                                 <TextBlock Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Projects.RemoteUrl}" />
                                                 <TextBox Text="{Binding EditingOriginUrl, Mode=TwoWay}" PlaceholderText="{loc:Loc Projects.RemoteUrlPlaceholder}" />
@@ -270,7 +234,7 @@
                                                 </ComboBox.ItemTemplate>
                                             </ComboBox>
                                         </Grid>
-                                        <Border Grid.Row="5" Classes="inset" Margin="0,10,0,0" IsVisible="{Binding IsPathEditorOpen}">
+                                        <Border Grid.Row="5" Classes="inset project-path-editor" Margin="0,10,0,0" IsVisible="{Binding IsPathEditorOpen}">
                                             <StackPanel Spacing="10">
                                                 <TextBlock Classes="caption" Text="{loc:Loc Projects.PathHint}" TextWrapping="Wrap" />
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
@@ -297,7 +261,7 @@
             </StackPanel>
         </ScrollViewer>
         </Grid>
-        <StackPanel Grid.Row="4" Margin="0,8,0,0" Spacing="6">
+        <StackPanel Grid.Row="3" Margin="0,8,0,0" Spacing="6" IsVisible="{Binding !IsCloneEditorOpen}">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding IsTransferBusy}">
                 <ProgressBar IsIndeterminate="True" Height="4" VerticalAlignment="Center" />
                 <Button Grid.Column="1" Content="{loc:Loc Projects.CancelTransfer}" Command="{Binding CancelTransferCommand}" Classes="ghost compact" />

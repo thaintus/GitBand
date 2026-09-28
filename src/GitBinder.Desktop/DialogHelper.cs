@@ -48,20 +48,28 @@ public static class DialogHelper
         finally { NoticeQueue.Release(); }
     }
 
-    private static global::Avalonia.Controls.Window? GetTopLevel()
+    /// <summary>模态操作优先使用当前活动窗口，避免目录选择器被编辑窗口挡住。</summary>
+    private static global::Avalonia.Controls.Window? GetActiveOwner()
     {
-        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            return desktop.MainWindow;
-        }
+        if (Avalonia.Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime desktop)
+            return null;
+        return desktop.Windows.LastOrDefault(window => window.IsVisible && window.IsActive && window is not MessageDialog)
+            ?? desktop.MainWindow;
+    }
 
-        return null;
+    /// <summary>显示带返回结果的模态窗口；无窗口宿主时按取消处理。</summary>
+    public static async Task<TResult?> ShowDialogAsync<TResult>(global::Avalonia.Controls.Window dialog)
+        where TResult : struct
+    {
+        var owner = GetActiveOwner();
+        if (owner is null) return null;
+        return await dialog.ShowDialog<TResult?>(owner);
     }
 
     /// <summary>选择单个文件，返回路径或 null。</summary>
     public static async Task<string?> PickFileAsync()
     {
-        var window = GetTopLevel();
+        var window = GetActiveOwner();
         if (window is null)
         {
             return null;
@@ -85,7 +93,7 @@ public static class DialogHelper
     /// <summary>选择目录，返回路径或 null。</summary>
     public static async Task<string?> PickDirectoryAsync()
     {
-        var window = GetTopLevel();
+        var window = GetActiveOwner();
         if (window is null)
         {
             return null;
@@ -106,10 +114,10 @@ public static class DialogHelper
         return folders[0].TryGetLocalPath();
     }
 
-    /// <summary>显示模态确认窗口；找不到主窗口时按取消处理。</summary>
+    /// <summary>由活动窗口承载确认；嵌套确认取消时不影响下面的编辑窗口。</summary>
     public static async Task<bool> ConfirmAsync(string title, string message, string confirmText)
     {
-        var owner = GetTopLevel();
+        var owner = GetActiveOwner();
         if (owner is null)
         {
             return false;
@@ -123,8 +131,17 @@ public static class DialogHelper
     public static async Task<bool> EditProjectGroupAsync(
         string title, string initialName, Func<string, Task<string?>> save)
     {
-        var owner = GetTopLevel();
+        var owner = GetActiveOwner();
         if (owner is null) return false;
         return await new GroupEditDialog(title, initialName, save).ShowDialog<bool?>(owner) is true;
+    }
+
+    /// <summary>平台新增/编辑共用模态表单；保存失败时由表单保留输入并展示错误。</summary>
+    public static async Task<bool> EditPlatformAsync(string title, string initialName, string initialHost,
+        Func<string, string, Task<string?>> save)
+    {
+        var owner = GetActiveOwner();
+        if (owner is null) return false;
+        return await new PlatformEditDialog(title, initialName, initialHost, save).ShowDialog<bool?>(owner) is true;
     }
 }

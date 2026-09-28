@@ -9,10 +9,11 @@
         x:DataType="vm:AccountEditViewModel"
         Width="640" Height="780"
         MinWidth="560" MinHeight="620"
+        CanMinimize="False" CanMaximize="False"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Icon="/Assets/avalonia-logo.ico"
         Background="{DynamicResource SurfaceBrush}"
-        Title="{Binding WindowTitle}">
+        Title="{Binding WindowTitle}" KeyDown="OnKeyDown" Closing="OnClosing">
 
     <Grid RowDefinitions="Auto,*,Auto">
         <Grid Grid.Row="0" Margin="28,24,28,22" ColumnDefinitions="Auto,*" ColumnSpacing="14">

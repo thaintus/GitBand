@@ -28,7 +28,7 @@ internal static class Program
 }
 
 // 继承真实 App.Initialize 加载已编译 XAML、资源、控件模板；绝不调用 App 的启动/组合根。
-public sealed class SmokeApp : App
+public sealed partial class SmokeApp : App
 {
     public static string OutputDirectory { get; set; } = string.Empty;
     public static bool ScreenshotsOnly { get; set; }
@@ -81,6 +81,7 @@ public sealed class SmokeApp : App
                     await SettleAsync();
                     Capture(_window, $"{culture}-{width}-Settings");
                     Check(_window.GetVisualDescendants().OfType<SettingsView>().Any(), $"页面渲染 {culture} {width} Nav.Settings");
+                    await CaptureModalPreviewsAsync(culture, width);
                 }
             }
             await _fixture.Localization.SetCultureAsync(new CultureInfo("zh-CN"));
@@ -95,9 +96,13 @@ public sealed class SmokeApp : App
                 await VerifyGroupsAsync();
                 await VerifyNoticesAsync();
                 await VerifyAccountEditorAsync();
+                await VerifyPlatformEditorAsync();
+                await VerifyCloneEditorAsync();
+                await VerifyPageEscapeAsync();
             }
             Check(App.Services is null, "验证结束仍未建立真实服务容器");
-            Check(_fixture.Transfer.CloneCount == 0 && _fixture.Transfer.PullCount == 0, "未执行克隆或拉取（Fake 调用次数均为零）");
+            Check(_fixture.Transfer.CloneCount == (ScreenshotsOnly ? 0 : 3) && _fixture.Transfer.PullCount == 0,
+                "传输调用仅为受控内存 Fake：截图模式零次，完整验证含失败/取消/成功三次克隆，零次拉取");
         }
         catch (Exception exception)
         {
@@ -150,6 +155,7 @@ public sealed class SmokeApp : App
         var task = _fixture.Projects.NewGroupCommand.ExecuteAsync(null);
         await SettleAsync();
         var dialog = _desktop.Windows.OfType<GroupEditDialog>().Single();
+        CheckDialogChrome(dialog, "分组编辑");
         Check(dialog.IsVisible, "新增分组命令打开真实模态弹窗");
         Click(dialog.FindControl<Button>("SaveButton")!);
         await SettleAsync();
@@ -176,9 +182,10 @@ public sealed class SmokeApp : App
         await SettleAsync();
         dialog = _desktop.Windows.OfType<GroupEditDialog>().Single();
         dialog.FindControl<TextBox>("NameInput")!.Text = "取消不能保存";
-        Click(dialog.FindControl<Button>("CancelButton")!);
-        await task;
-        Check(_fixture.Groups.Groups.Count == originalCount + 1, "取消分组弹窗不保存");
+        PressEscape(dialog.FindControl<TextBox>("NameInput")!);
+        await task.WaitAsync(TimeSpan.FromSeconds(5));
+        Check(_fixture.Groups.Groups.Count == originalCount + 1, "分组输入框 Escape 关闭且不保存");
+        Check(_window.IsVisible, "分组 Escape 不关闭父窗口");
     }
 
     private async Task VerifyNoticesAsync()
@@ -187,21 +194,25 @@ public sealed class SmokeApp : App
         var dialog = new MessageDialog(message);
         var close = dialog.ShowDialog(_window);
         await SettleAsync();
+        CheckDialogChrome(dialog, "操作结果");
         var text = dialog.FindControl<SelectableTextBlock>("MessageText")!;
         text.SelectAll();
         Check(text.SelectionEnd - text.SelectionStart == message.Length, "消息正文可全选（未写入系统剪贴板）");
         Check(!dialog.GetVisualDescendants().OfType<TextBox>().Any(), "结果弹窗没有只读 TextBox");
         Capture(dialog, "message-long-selected");
-        Click(dialog.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "关闭")));
-        await close;
+        PressEscape(text);
+        await close.WaitAsync(TimeSpan.FromSeconds(5));
+        Check(!dialog.IsVisible && _window.IsVisible, "结果正文 Escape 只关闭当前弹窗");
         var confirm = new ConfirmationDialog("删除确认", "这是虚构条目，只验证取消，不执行删除。", "删除");
         var confirmation = confirm.ShowDialog<bool?>(_window);
         await SettleAsync();
+        CheckDialogChrome(confirm, "二次确认");
         var cancel = confirm.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "取消"));
         Check(cancel.IsDefault, "确认弹窗默认按钮为取消");
         Capture(confirm, "confirmation");
-        Click(cancel);
-        Check(await confirmation is false, "取消确认返回 false");
+        PressEscape(cancel);
+        Check(await confirmation.WaitAsync(TimeSpan.FromSeconds(5)) is false, "确认弹窗 Escape 返回 false，不执行确认");
+        Check(_window.IsVisible, "确认 Escape 不关闭父窗口");
     }
 
     private async Task VerifyAccountEditorAsync()
@@ -213,10 +224,19 @@ public sealed class SmokeApp : App
         await SettleAsync();
         var editor = _desktop.Windows.OfType<AccountEditWindow>().Single();
         Check(editor.IsVisible, "新增账号命令打开真实账号编辑窗");
+        CheckDialogChrome(editor, "账号编辑");
+        _fixture.AccountEditor.Alias = "Escape 不应保存此账号";
         Capture(editor, "account-editor");
-        Click(editor.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "取消")));
-        await task;
-        Check((await _fixture.AccountRepository.GetAllAsync()).Count == count, "取消账号编辑未写入账号仓储");
+        var nested = new ConfirmationDialog("嵌套确认", "只检查 Escape 路由，不执行任何删除。", "确认");
+        var nestedResult = nested.ShowDialog<bool?>(editor);
+        await SettleAsync();
+        PressEscape(nested);
+        Check(await nestedResult.WaitAsync(TimeSpan.FromSeconds(5)) is false && editor.IsVisible && _window.IsVisible,
+            "嵌套确认 Escape 只取消最上层弹窗，保留账号编辑及主窗");
+        PressEscape(editor.GetVisualDescendants().OfType<TextBox>().First());
+        await task.WaitAsync(TimeSpan.FromSeconds(5));
+        Check((await _fixture.AccountRepository.GetAllAsync()).Count == count, "账号输入框 Escape 未写入账号仓储");
+        Check(!editor.IsVisible && _window.IsVisible, "账号 Escape 只关闭编辑窗");
     }
 
     private async Task DismissNoticesAsync()

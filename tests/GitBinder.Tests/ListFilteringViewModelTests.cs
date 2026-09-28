@@ -292,7 +292,7 @@ public sealed class ListFilteringViewModelTests
     }
 
     [Fact]
-    public async Task Platforms_RefreshKeepsQuery_AndFilteringDoesNotResetDraft()
+    public async Task Platforms_RefreshKeepsQuery()
     {
         var fixture = new Fixture();
         var viewModel = fixture.CreatePlatforms();
@@ -306,9 +306,6 @@ public sealed class ListFilteringViewModelTests
         Assert.Equal("hub", viewModel.SearchText);
         Assert.Equal("GitHub", Assert.Single(viewModel.FilteredItems).Name);
 
-        viewModel.NewCommand.Execute(null);
-        viewModel.EditName = "Draft";
-        viewModel.EditHost = "draft.example.org";
         viewModel.SearchText = "missing";
         Assert.True(viewModel.HasItems);
         Assert.True(viewModel.HasNoMatches);
@@ -318,9 +315,6 @@ public sealed class ListFilteringViewModelTests
 
         Assert.False(viewModel.HasSearchText);
         Assert.False(viewModel.HasNoMatches);
-        Assert.True(viewModel.IsEditorOpen);
-        Assert.Equal("Draft", viewModel.EditName);
-        Assert.Equal("draft.example.org", viewModel.EditHost);
     }
 
     [Fact]

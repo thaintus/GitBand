@@ -8,7 +8,7 @@
              x:Class="GitBinder.Desktop.Views.PlatformsView"
              x:DataType="vm:PlatformsViewModel">
 
-    <Grid Margin="28,24" RowDefinitions="Auto,Auto,Auto,*">
+    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*">
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="16">
             <StackPanel Spacing="5">
                 <TextBlock Classes="page-title" Text="{loc:Loc Platforms.Title}" />
@@ -16,7 +16,7 @@
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <Button Content="{loc:Loc Platforms.RestoreDefaults}" Command="{Binding RestoreDefaultsCommand}" Classes="ghost" />
-                <Button Command="{Binding NewCommand}" Classes="primary" AutomationProperties.Name="{loc:Loc Common.Add.New}">
+                <Button x:Name="PlatformNewButton" Command="{Binding NewCommand}" Classes="primary" AutomationProperties.Name="{loc:Loc Common.Add.New}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Path Classes="action-glyph" Data="M12,5 V19 M5,12 H19" />
                         <TextBlock Text="{loc:Loc Common.Add.New}" VerticalAlignment="Center" />
@@ -39,24 +39,8 @@
             </Button>
         </Grid>
 
-        <!-- 编辑表单 -->
-        <Border Grid.Row="2" Margin="0,14,0,0" Classes="card" Padding="16" IsVisible="{Binding IsEditorOpen}">
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
-                <TextBlock Grid.Row="0" Grid.Column="0" Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Platforms.Name}" />
-                <TextBlock Grid.Row="0" Grid.Column="1" Classes="caption" FontWeight="SemiBold" Text="{loc:Loc Common.Host}" />
-                <TextBox Grid.Row="1" Grid.Column="0" Text="{Binding EditName}" PlaceholderText="{loc:Loc Platforms.NamePlaceholder}"
-                         AutomationProperties.Name="{loc:Loc Platforms.Name}" />
-                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EditHost}" PlaceholderText="{loc:Loc Platforms.HostPlaceholder}"
-                         AutomationProperties.Name="{loc:Loc Common.Host}" />
-                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0" HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
-                    <Button Content="{loc:Loc Common.Cancel}" Command="{Binding CancelEditCommand}" Classes="ghost" />
-                    <Button Content="{loc:Loc Common.Save}" Command="{Binding SaveCommand}" Classes="primary" />
-                </StackPanel>
-            </Grid>
-        </Border>
-
         <!-- 平台列表 -->
-        <ScrollViewer Grid.Row="3" Margin="0,14,0,0" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="2" Margin="0,14,0,0" HorizontalScrollBarVisibility="Disabled">
             <StackPanel>
                 <Border Classes="card" Padding="32" IsVisible="{Binding !HasItems}">
                     <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="360">

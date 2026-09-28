@@ -14,6 +14,7 @@ public partial class PlatformsViewModel : ViewModelBase
 {
     private readonly PlatformService _platformService;
     private readonly ILocalizationService _localization;
+    private readonly Func<string, string, string, Func<string, string, Task<string?>>, Task<bool>> _editPlatform;
 
     public ObservableCollection<PlatformItemViewModel> Items { get; } = [];
 
@@ -40,23 +41,18 @@ public partial class PlatformsViewModel : ViewModelBase
         set => SetNotice(ref _feedback, value);
     }
 
-    // 编辑表单字段。
+    /// <summary>阻止新建和编辑命令重复打开模态窗口。</summary>
     [ObservableProperty]
-    private string _editName = string.Empty;
-
-    [ObservableProperty]
-    private string _editHost = string.Empty;
-
-    /// <summary>平台编辑器默认关闭，保证进入页面时首先看到列表。</summary>
-    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(NewCommand))]
+    [NotifyCanExecuteChangedFor(nameof(StartEditCommand))]
     private bool _isEditorOpen;
 
-    private Guid? _editingId;
-
-    public PlatformsViewModel(PlatformService platformService, ILocalizationService localization)
+    public PlatformsViewModel(PlatformService platformService, ILocalizationService localization,
+        Func<string, string, string, Func<string, string, Task<string?>>, Task<bool>>? editPlatform = null)
     {
         _platformService = platformService;
         _localization = localization;
+        _editPlatform = editPlatform ?? DialogHelper.EditPlatformAsync;
     }
 
     public async Task LoadAsync()
@@ -74,7 +70,6 @@ public partial class PlatformsViewModel : ViewModelBase
 
         HasItems = Items.Count > 0;
         ApplyFilter();
-        ResetForm();
     }
 
     partial void OnSearchTextChanged(string value) => ApplyFilter();
@@ -84,67 +79,63 @@ public partial class PlatformsViewModel : ViewModelBase
 
     private void ApplyFilter()
     {
-        // Items 已按启用状态排序，过滤后沿用相对顺序，不干扰正在填写的平台表单。
+        // Items 已按启用状态排序，过滤后沿用相对顺序；弹窗表单独立维护输入。
         FilteredItems = Items.Where(item => ListSearch.Matches(
             SearchText, item.Name, item.Host)).ToList();
     }
 
-    private void ResetForm()
-    {
-        _editingId = null;
-        EditName = string.Empty;
-        EditHost = string.Empty;
-        IsEditorOpen = false;
-        Feedback = string.Empty;
-    }
+    private bool CanOpenEditor() => !IsEditorOpen;
 
-    [RelayCommand]
-    private void New()
+    [RelayCommand(CanExecute = nameof(CanOpenEditor))]
+    private Task NewAsync() => OpenEditorAsync(null);
+
+    [RelayCommand(CanExecute = nameof(CanOpenEditor))]
+    private Task StartEditAsync(PlatformItemViewModel? item)
+        => item is null ? Task.CompletedTask : OpenEditorAsync(item);
+
+    private async Task OpenEditorAsync(PlatformItemViewModel? item)
     {
-        ResetForm();
+        if (IsEditorOpen) return;
         IsEditorOpen = true;
-    }
-
-    [RelayCommand]
-    private void StartEdit(PlatformItemViewModel? item)
-    {
-        if (item is null)
+        Feedback = string.Empty;
+        bool saved;
+        try
         {
+            saved = await _editPlatform(
+                _localization.GetString(item is null ? "Platforms.Editor.New" : "Platforms.Editor.Edit"),
+                item?.Name ?? string.Empty, item?.Host ?? string.Empty,
+                (name, host) => SavePlatformAsync(item?.Platform.Id, name, host));
+        }
+        catch (Exception)
+        {
+            Feedback = _localization.GetString("Platforms.Editor.OpenFailed");
             return;
         }
+        finally { IsEditorOpen = false; }
 
-        _editingId = item.Platform.Id;
-        EditName = item.Platform.Name;
-        EditHost = item.Platform.Host;
-        IsEditorOpen = true;
-        Feedback = string.Empty;
+        if (!saved) return;
+        try { await LoadAsync(); }
+        catch (Exception)
+        {
+            // 写入已经完成，刷新失败不能被误报为保存失败，也不能重复新建。
+            Feedback = _localization.GetString("Platforms.ReloadFailed");
+        }
     }
 
-    [RelayCommand]
-    private async Task SaveAsync()
+    private async Task<string?> SavePlatformAsync(Guid? id, string name, string host)
     {
-        Feedback = string.Empty;
-
-        if (_editingId is Guid id)
+        try
         {
-            var result = await _platformService.UpdateAsync(id, EditName, EditHost);
-            if (!result.IsSuccess)
-            {
-                Feedback = _localization.GetString(result.Error!.Code, result.Error.Arguments);
-                return;
-            }
+            var result = id is Guid editingId
+                ? await _platformService.UpdateAsync(editingId, name, host)
+                : await _platformService.CreateAsync(name, host);
+            return result.IsSuccess ? null : _localization.GetString(result.Error!.Code, result.Error.Arguments);
         }
-        else
+        catch (Exception)
         {
-            var result = await _platformService.CreateAsync(EditName, EditHost);
-            if (!result.IsSuccess)
-            {
-                Feedback = _localization.GetString(result.Error!.Code, result.Error.Arguments);
-                return;
-            }
+            // 原始异常可能包含路径等信息，只返回可读且可复制的本地化错误。
+            return _localization.GetString("Platforms.Editor.SaveFailed");
         }
-
-        await LoadAsync();
     }
 
     [RelayCommand]
@@ -192,12 +183,6 @@ public partial class PlatformsViewModel : ViewModelBase
         {
             Feedback = _localization.GetString(result.Error!.Code, result.Error.Arguments);
         }
-    }
-
-    [RelayCommand]
-    private void CancelEdit()
-    {
-        ResetForm();
     }
 
     [RelayCommand]

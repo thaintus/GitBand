@@ -4,6 +4,7 @@
         x:Class="GitBinder.Desktop.Views.MessageDialog"
         Width="580" MinWidth="420" MinHeight="240" MaxHeight="680" SizeToContent="Height"
         CanResize="True"
+        CanMinimize="False" CanMaximize="False"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
         Background="{DynamicResource SurfaceBrush}" Title="{loc:Loc Notice.Title}"
         Icon="/Assets/avalonia-logo.ico" KeyDown="OnKeyDown">

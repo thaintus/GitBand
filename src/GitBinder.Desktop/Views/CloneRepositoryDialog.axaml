@@ -1,0 +1,95 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GitBinder.Desktop.ViewModels"
+        xmlns:accounts="clr-namespace:GitBinder.Domain.Accounts;assembly=GitBinder.Domain"
+        xmlns:loc="using:GitBinder.Desktop.Localization"
+        x:Class="GitBinder.Desktop.Views.CloneRepositoryDialog"
+        x:DataType="vm:ProjectsViewModel"
+        Title="{loc:Loc Projects.Clone}" Width="620" Height="560" MinWidth="520" MinHeight="460"
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        CanMinimize="False" CanMaximize="False"
+        Icon="/Assets/avalonia-logo.ico" Background="{DynamicResource SurfaceBrush}"
+        Opened="OnOpened" Closing="OnClosing" Closed="OnClosed" KeyDown="OnKeyDown">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <Grid Margin="28,24,28,18" ColumnDefinitions="Auto,*" ColumnSpacing="14">
+            <Border Width="40" Height="40" CornerRadius="12" Background="{DynamicResource PrimarySoftBrush}"
+                    VerticalAlignment="Top">
+                <Path Width="20" Height="20" Stretch="Uniform" Stroke="{DynamicResource PrimaryBrush}"
+                      StrokeThickness="1.6" StrokeLineCap="Round" StrokeJoin="Round"
+                      HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Data="M7,7 V17 M7,14 C7,11 17,13 17,7 M7,3 A2,2 0 1 1 7,7 A2,2 0 1 1 7,3 M7,17 A2,2 0 1 1 7,21 A2,2 0 1 1 7,17 M17,3 A2,2 0 1 1 17,7 A2,2 0 1 1 17,3" />
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="6">
+                <TextBlock Text="{loc:Loc Projects.Clone}" FontSize="20" FontWeight="SemiBold"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <SelectableTextBlock Text="{loc:Loc Projects.CloneHint}" FontSize="12" LineHeight="20"
+                                     Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+        </Grid>
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="28,0,28,20" Spacing="14">
+                <StackPanel Spacing="14" IsEnabled="{Binding !IsCloneBusy}">
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="caption" Text="{loc:Loc Projects.CloneAccount}" />
+                        <ComboBox x:Name="CloneAccountInput" ItemsSource="{Binding CloneAccounts}"
+                                  SelectedItem="{Binding SelectedCloneAccount, Mode=TwoWay}" HorizontalAlignment="Stretch"
+                                  MinHeight="38" AutomationProperties.Name="{loc:Loc Projects.CloneAccount}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="accounts:Account">
+                                    <TextBlock Text="{Binding DisplayAlias}" TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="caption" Text="{loc:Loc Projects.RemoteUrl}" />
+                        <TextBox x:Name="RemoteUrlInput" Text="{Binding CloneRemoteUrl, Mode=TwoWay}"
+                                 PlaceholderText="{loc:Loc Projects.RemoteUrlPlaceholder}"
+                                 AutomationProperties.Name="{loc:Loc Projects.RemoteUrl}" />
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="caption" Text="{loc:Loc Projects.CloneParent}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <TextBox x:Name="ParentDirectoryInput" Text="{Binding CloneParentDirectory, Mode=TwoWay}"
+                                     PlaceholderText="{loc:Loc Projects.CloneParent}"
+                                     AutomationProperties.Name="{loc:Loc Projects.CloneParent}" />
+                            <Button x:Name="BrowseDirectoryButton" Grid.Column="1" Classes="secondary"
+                                    Content="{loc:Loc Projects.BrowsePath}" Command="{Binding BrowseCloneDirectoryCommand}" />
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Classes="caption" Text="{loc:Loc Projects.CloneFolder}" />
+                        <TextBox x:Name="FolderNameInput" Text="{Binding CloneFolderName, Mode=TwoWay}"
+                                 PlaceholderText="{loc:Loc Projects.CloneFolder}"
+                                 AutomationProperties.Name="{loc:Loc Projects.CloneFolder}" />
+                    </StackPanel>
+                </StackPanel>
+                <Border x:Name="ErrorPanel" IsVisible="{Binding HasCloneFeedback}" Padding="12,10" CornerRadius="10"
+                        Background="{DynamicResource DangerSoftBrush}">
+                    <SelectableTextBlock x:Name="ErrorText" Text="{Binding CloneFeedback}" FontSize="12" LineHeight="20"
+                                         TextWrapping="Wrap" Foreground="{DynamicResource DangerBrush}" />
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+        <Border Grid.Row="2" Padding="28,16" BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource SurfaceMutedBrush}">
+            <StackPanel Spacing="12">
+                <StackPanel x:Name="ProgressPanel" Spacing="8" IsVisible="{Binding IsCloneBusy}">
+                    <ProgressBar IsIndeterminate="True" Height="3" />
+                    <SelectableTextBlock x:Name="ProgressText" Text="{Binding OperationProgress}" FontSize="12"
+                                         Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+                    <Button x:Name="CancelButton" Classes="ghost" MinWidth="80" Click="OnCancelClick">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc Common.Cancel}" IsVisible="{Binding !IsCloneBusy}" />
+                            <TextBlock Text="{loc:Loc Projects.CancelTransfer}" IsVisible="{Binding IsCloneBusy}" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="StartCloneButton" Content="{loc:Loc Projects.StartClone}" Classes="primary"
+                            MinWidth="100" IsDefault="True" IsEnabled="{Binding !IsCloneBusy}" Command="{Binding CloneCommand}" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -27,6 +27,7 @@ public partial class ProjectsViewModel : ViewModelBase
     private readonly DirectoryPickerDelegate _directoryPicker;
     private readonly ProjectTransferService _transferService;
     private readonly Func<string, string, string, Task<bool>> _confirmProtocolChange;
+    private readonly Func<ProjectsViewModel, Task> _showCloneDialog;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanManageProjects))]
     private bool _isBindingBusy;
@@ -36,6 +37,16 @@ public partial class ProjectsViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isCloneEditorOpen;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanManageProjects))]
+    private bool _isCloneBusy;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCloneFeedback))]
+    private string _cloneFeedback = string.Empty;
+
+    public bool HasCloneFeedback => !string.IsNullOrWhiteSpace(CloneFeedback);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanManageProjects))]
@@ -71,6 +82,13 @@ public partial class ProjectsViewModel : ViewModelBase
     }
 
     public ObservableCollection<ProjectItemViewModel> Items { get; } = [];
+
+    /// <summary>供主窗口 Escape 关闭保护查询；包括传输结束后的登记/刷新收尾。</summary>
+    public bool HasPendingOperations => !CanManageProjects
+        || CloneCommand.IsRunning || PullCommand.IsRunning || PullGroupCommand.IsRunning
+        || CreateCommand.IsRunning || RemoveCommand.IsRunning || SaveRemoteCommand.IsRunning
+        || SavePathCommand.IsRunning || UnbindCommand.IsRunning
+        || Items.Any(item => item.IsPathSaving);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoMatches))]
@@ -112,7 +130,8 @@ public partial class ProjectsViewModel : ViewModelBase
         DirectoryPickerDelegate directoryPicker,
         ProjectTransferService transferService,
         ProjectGroupService groupService,
-        Func<string, string, string, Task<bool>>? confirmProtocolChange = null)
+        Func<string, string, string, Task<bool>>? confirmProtocolChange = null,
+        Func<ProjectsViewModel, Task>? showCloneDialog = null)
     {
         _repository = repository;
         _projectService = projectService;
@@ -125,6 +144,10 @@ public partial class ProjectsViewModel : ViewModelBase
         _transferService = transferService;
         _groupService = groupService;
         _confirmProtocolChange = confirmProtocolChange ?? DialogHelper.ConfirmAsync;
+        _showCloneDialog = showCloneDialog ?? (async viewModel =>
+        {
+            await DialogHelper.ShowDialogAsync<bool>(new Views.CloneRepositoryDialog(viewModel));
+        });
     }
 
     public async Task LoadAsync()
@@ -197,23 +220,32 @@ public partial class ProjectsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void OpenClone() => IsCloneEditorOpen = true;
+    private async Task OpenCloneAsync()
+    {
+        if (IsCloneEditorOpen || !CanManageProjects) return;
+        CloneFeedback = string.Empty;
+        IsCloneEditorOpen = true;
+        try { await _showCloneDialog(this); }
+        catch (Exception) { Feedback = _localization.GetString("Projects.CloneDialogFailed"); }
+        finally { IsCloneEditorOpen = false; }
+    }
 
     [RelayCommand]
     private void CloseClone()
     {
-        if (!IsTransferBusy) IsCloneEditorOpen = false;
+        if (!IsCloneBusy && !IsTransferBusy) IsCloneEditorOpen = false;
     }
 
     [RelayCommand]
     private async Task BrowseCloneDirectoryAsync()
     {
+        if (IsCloneBusy) return;
         try
         {
             var path = await _directoryPicker();
             if (!string.IsNullOrWhiteSpace(path)) CloneParentDirectory = path;
         }
-        catch (Exception) { Feedback = _localization.GetString("CLONE_PARENT_INVALID"); }
+        catch (Exception) { CloneFeedback = _localization.GetString("CLONE_PARENT_INVALID"); }
     }
 
     [RelayCommand]
@@ -222,24 +254,59 @@ public partial class ProjectsViewModel : ViewModelBase
     [RelayCommand]
     private async Task CloneAsync()
     {
-        if (!CanManageProjects) return;
+        if (IsCloneBusy || !CanManageProjects) return;
+        CloneFeedback = string.Empty;
         if (SelectedCloneAccount is null)
         {
-            Feedback = _localization.GetString("TRANSFER_ACCOUNT_INVALID");
+            CloneFeedback = _localization.GetString("TRANSFER_ACCOUNT_INVALID");
             return;
         }
         var selected = SelectedCloneAccount;
-        await RunTransferAsync(async ct =>
+        IsCloneBusy = true;
+        IsTransferBusy = true;
+        GroupPullDetails = string.Empty;
+        _transferCancellation = new CancellationTokenSource();
+        var succeeded = false;
+        var message = string.Empty;
+        try
         {
-            var result = await _transferService.CloneAsync(CloneRemoteUrl, CloneParentDirectory, CloneFolderName, selected.Id, ct);
-            if (result.IsSuccess)
-            {
-                IsCloneEditorOpen = false;
-                CloneRemoteUrl = string.Empty;
-                CloneFolderName = string.Empty;
-            }
-            return result;
-        }, "Projects.CloneSuccess", () => _effectiveAccountResolver.ResolveForClone(selected)?.DisplayAlias);
+            OperationProgress = _localization.GetString("Projects.TransferRunning",
+                _effectiveAccountResolver.ResolveForClone(selected)?.DisplayAlias ?? string.Empty);
+            var result = await _transferService.CloneAsync(CloneRemoteUrl, CloneParentDirectory, CloneFolderName,
+                selected.Id, _transferCancellation.Token);
+            succeeded = result.IsSuccess;
+            message = succeeded ? _localization.GetString("Projects.CloneSuccess")
+                : _localization.GetString(result.Error!.Code, result.Error.Arguments.Cast<object>().ToArray());
+        }
+        catch (Exception)
+        {
+            // 不显示原始异常，避免 Git/路径/认证异常中的敏感信息进入弹窗。
+            message = _localization.GetString(_transferCancellation.IsCancellationRequested ? "TRANSFER_CANCELLED" : "TRANSFER_FAILED");
+        }
+        finally
+        {
+            _transferCancellation.Dispose();
+            _transferCancellation = null;
+            IsTransferBusy = false;
+        }
+
+        // 失败也可能已完成克隆或登记；刷新列表，但不清理任何本地目录。
+        // IsCloneBusy 延续到刷新结束，避免这个窗口关闭或重复提交。
+        try { await LoadAsync(); }
+        catch (Exception) { message += " " + _localization.GetString("Projects.TransferReloadFailed"); }
+        finally
+        {
+            OperationProgress = string.Empty;
+            IsCloneBusy = false;
+        }
+        if (succeeded)
+        {
+            CloneRemoteUrl = string.Empty;
+            CloneFolderName = string.Empty;
+            IsCloneEditorOpen = false;
+            Feedback = message;
+        }
+        else CloneFeedback = message;
     }
 
     [RelayCommand]

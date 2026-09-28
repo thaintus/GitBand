@@ -9,6 +9,7 @@
         x:DataType="local:ConfirmationDialog"
         Width="500" MinWidth="380" MinHeight="240" MaxHeight="560" SizeToContent="Height"
         CanResize="False" ShowInTaskbar="False"
+        CanMinimize="False" CanMaximize="False"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceBrush}"
         Icon="/Assets/avalonia-logo.ico"

@@ -10,6 +10,7 @@ using GitBinder.Desktop;
 using GitBinder.Desktop.Localization;
 using GitBinder.Desktop.ViewModels;
 using GitBinder.Domain.Accounts;
+using GitBinder.Domain.Common;
 using GitBinder.Domain.Projects;
 using GitBinder.Domain.Services;
 using GitBinder.Tests.Fakes;
@@ -24,7 +25,9 @@ internal sealed class SmokeFixture
     public FakeAccountRepository AccountRepository { get; } = new();
     public FakeProjectRepository ProjectRepository { get; } = new();
     public FakeProjectGroupRepository Groups { get; } = new();
-    public FakeGitTransfer Transfer { get; } = new();
+    public SmokeGitTransfer Transfer { get; } = new();
+    public FakeGitService Git { get; } = new() { OriginUrl = "https://github.com/example/ui-demo.git" };
+    public SmokePlatforms PlatformRepository { get; } = new();
     public DashboardViewModel Dashboard { get; }
     public AccountsViewModel Accounts { get; }
     public ProjectsViewModel Projects { get; }
@@ -39,14 +42,14 @@ internal sealed class SmokeFixture
         var settings = new FakeSettingsRepository();
         var secrets = new FakeSecretStore();
         var dataPath = new SmokeDataPath(artifacts);
-        var git = new FakeGitService { OriginUrl = "https://github.com/example/ui-demo.git" };
+        var git = Git;
         var normalizer = new SmokeNormalizer();
         var resolver = new EffectiveAccountResolver(new FakeGlobalModeState(), bindings, AccountRepository);
         var bindingService = new BindingService(bindings, AccountRepository, ProjectRepository,
             secrets, git, new FakeGitConfigApplier(), new FakeSnapshotRepository(), Transfer, resolver);
         var accountService = new AccountService(AccountRepository, new BindingDeletionGuard(bindings),
             new SecretService(secrets), dataPath);
-        var platforms = new SmokePlatforms();
+        var platforms = PlatformRepository;
         var platformService = new PlatformService(platforms, settings);
         var projectService = new ProjectService(ProjectRepository, git, normalizer, AccountRepository, bindingService);
         var transferService = new ProjectTransferService(Transfer, projectService, ProjectRepository,
@@ -118,10 +121,49 @@ internal sealed class SmokeNormalizer : IPathNormalizer
 internal sealed class SmokePlatforms : IPlatformRepository
 {
     private readonly Dictionary<Guid, GitPlatform> _items = [];
+    public bool FailNextWrite { get; set; }
+    public Task? WriteGate { get; set; }
+    public int WriteAttempts { get; private set; }
     public Task<GitPlatform?> GetByIdAsync(Guid id, CancellationToken ct = default) => Task.FromResult(_items.GetValueOrDefault(id));
     public Task<GitPlatform?> GetByNameAsync(string name, CancellationToken ct = default) => Task.FromResult(_items.Values.FirstOrDefault(p => p.Name == name));
     public Task<IReadOnlyList<GitPlatform>> GetAllAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<GitPlatform>>(_items.Values.ToList());
-    public Task AddAsync(GitPlatform platform, CancellationToken ct = default) { _items[platform.Id] = platform; return Task.CompletedTask; }
+    public async Task AddAsync(GitPlatform platform, CancellationToken ct = default)
+    {
+        WriteAttempts++;
+        if (WriteGate is not null) await WriteGate.WaitAsync(ct);
+        if (FailNextWrite)
+        {
+            FailNextWrite = false;
+            throw new IOException("Isolated fake platform save failure.");
+        }
+        _items[platform.Id] = platform;
+    }
     public Task UpdateAsync(GitPlatform platform, CancellationToken ct = default) => AddAsync(platform, ct);
     public Task DeleteAsync(Guid id, CancellationToken ct = default) { _items.Remove(id); return Task.CompletedTask; }
+}
+
+// 独立于 xUnit 通用 Fake，支持进行中/取消断言；绝不构造外部命令执行器。
+internal sealed class SmokeGitTransfer : IGitTransfer
+{
+    public int CloneCount { get; private set; }
+    public int PullCount { get; private set; }
+    public Guid? UsedAccountId { get; private set; }
+    public Func<string, string, Account, CancellationToken, Task<Result>>? OnClone { get; set; }
+
+    public Task<Result> CloneAsync(string url, string destination, Account account, CancellationToken ct = default)
+    {
+        CloneCount++;
+        UsedAccountId = account.Id;
+        return OnClone?.Invoke(url, destination, account, ct)
+            ?? Task.FromResult(Result.Failure(new DomainError("CLONE_FAILED")));
+    }
+
+    public Task<Result> PullAsync(string path, Account account, CancellationToken ct = default)
+    {
+        PullCount++;
+        return Task.FromResult(Result.Failure(new DomainError("PULL_FAILED")));
+    }
+
+    public Task<Result> TestAsync(string path, Account account, CancellationToken ct = default)
+        => Task.FromResult(Result.Success());
 }

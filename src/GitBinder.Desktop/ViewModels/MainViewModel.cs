@@ -34,6 +34,12 @@ public partial class MainViewModel : ViewModelBase
 
     public bool IsSettingsSelected => ReferenceEquals(CurrentPage, _settings);
 
+    /// <summary>即使已切换页面，也不能通过 Escape 中断另一页的 Git 或持久化操作。</summary>
+    public bool CanCloseWithEscape => !_projects.HasPendingOperations
+        && !EnableGlobalModeCommand.IsRunning && !SwitchGlobalAccountCommand.IsRunning && !DisableGlobalModeCommand.IsRunning
+        && !_accounts.SetDefaultCommand.IsRunning && !_accounts.DeleteCommand.IsRunning
+        && !_platforms.DeleteCommand.IsRunning && !_platforms.ToggleEnabledCommand.IsRunning && !_platforms.RestoreDefaultsCommand.IsRunning;
+
     [ObservableProperty]
     private NavItem? _selectedNav;
 

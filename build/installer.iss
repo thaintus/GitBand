@@ -7,7 +7,7 @@
 #define MyAppName "GitBinder"
 #define MyAppNameCn "Git 仓库账号绑定管理工具"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.1.9"
+  #define MyAppVersion "1.2.0"
 #endif
 #define MyAppPublisher "GitBinder"
 #define MyAppExeName "GitBinder.Desktop.exe"

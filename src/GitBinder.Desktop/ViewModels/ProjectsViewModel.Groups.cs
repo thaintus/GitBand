@@ -17,7 +17,7 @@ public partial class ProjectsViewModel
     [NotifyPropertyChangedFor(nameof(HasGroupPullDetails))]
     private string _groupPullDetails = string.Empty;
 
-    public bool CanManageProjects => !IsTransferBusy && !IsGroupBusy && !IsBindingBusy;
+    public bool CanManageProjects => !IsTransferBusy && !IsCloneBusy && !IsGroupBusy && !IsBindingBusy;
     public bool HasGroupPullDetails => !string.IsNullOrEmpty(GroupPullDetails);
     partial void OnSelectedGroupChanged(ProjectGroupItemViewModel? value) => ApplyFilter();
 
